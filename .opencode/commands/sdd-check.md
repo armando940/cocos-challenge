@@ -11,7 +11,9 @@ Alcance: $ARGUMENTS
 Resolución del requerimiento:
 - Si el primer token es numérico (ej. `003`), auditá `specs/003-*/`.
 - Si no se indica número, usá `activeRequirement` de `specs/state.json`.
-- Si no se indica nada más, audita la fase más reciente con tareas marcadas en ese `tasks.md`.
+- Si el alcance dice `ola N` (o `WN`), auditá **solo** las tareas con esa `ola:` en `tasks.md` y sus
+  rutas `toca:`. Una revisión por ola, nunca una por lane.
+- Si no se indica nada más, audita la ola más reciente con tareas marcadas en ese `tasks.md`.
 - No audites otros requerimientos: cada carpeta se revisa por separado.
 
 Instrucciones:

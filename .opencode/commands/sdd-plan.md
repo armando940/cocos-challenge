@@ -20,7 +20,9 @@ Requisitos:
    es obligatorio para que no se mezclen con otros requerimientos).
 3. Fases con objetivo, entregable y DoD medible. Cada tarea: ID, descripción, depende de,
    estimación, riesgo (Bajo/Medio/Alto) y criterio de done verificable con un comando.
-4. Identifica el camino crítico y los riesgos con su mitigación.
+4. Identifica el camino crítico, las **olas de ejecución** (tareas paralelizables con rutas
+   disjuntas, máx. 3 lanes) y los riesgos con su mitigación. Sin duda sobre el solapamiento de
+   archivos → serie, una tarea por ola.
 5. No inventes alcance fuera de `specs/NNN-slug/spec.md`; si falta algo, anótalo como dependencia
    del spec.
 6. Cierra con la tabla "estado actual vs plan".

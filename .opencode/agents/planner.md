@@ -72,6 +72,11 @@ Usá la plantilla `specs/_templates/plan.md`. No inventes tareas fuera del spec 
 |----|-------|------------|------------|--------|------|
 | RNNN-T01 | <descripción accionable> | — | 1h | Bajo/Medio/Alto | `<comando o criterio>` |
 
+## Olas de ejecución
+| Ola | Tareas en paralelo | Lanes | Serializa | Verificación de cierre |
+|-----|--------------------|-------|-----------|------------------------|
+| W1 | RNNN-T02, RNNN-T03 | 2 | — | `./gradlew compileJava test` |
+
 ## Camino crítico
 <secuencia de tareas que no admite paralelismo>
 
@@ -96,14 +101,14 @@ estimación (eso vive en `plan.md`).
 ```markdown
 # Tasks Checklist — NNN <título>
 
-> Formato: `- [ ] RNNN-TXX — Descripción | Fase N | depende de: RNNN-TYY | ~Xh | done: <criterio>`
+> Formato: `- [ ] RNNN-TXX — Descripción | Fase N | ola: WN | depende de: RNNN-TYY | toca: <rutas> | ~Xh | done: <criterio>`
 
 ## Fase 0 — <nombre>
-- [x] RNNN-T01 — <tarea ya hecha> | Fase 0 | — | ~0.5h | done: `<comando>`
-- [ ] RNNN-T02 — <tarea pendiente> | Fase 0 | depende de: RNNN-T01 | ~1h | done: `<comando>`
+- [x] RNNN-T01 — <tarea ya hecha> | Fase 0 | ola: W1 | — | toca: src/... | ~0.5h | done: `<comando>`
+- [ ] RNNN-T02 — <tarea pendiente> | Fase 0 | ola: W1 | depende de: RNNN-T01 | toca: src/... | ~1h | done: `<comando>`
 
 ## Buffer
-- [ ] RNNN-T90 — <imprevisto conocido> | Buffer | — | ~1h | done: <criterio>
+- [ ] RNNN-T90 — <imprevisto conocido> | Buffer | ola: W9 | — | toca: ? | ~1h | done: <criterio>
 ```
 
 Reglas del checklist:
@@ -111,19 +116,87 @@ Reglas del checklist:
 - Una línea por tarea, sin sub-bullets: el detalle está en `plan.md`.
 - Cierra con un bloque **Buffer**.
 
+Formato extendido obligatorio (incluye ola y alcance de archivos):
+
+```text
+- [ ] RNNN-T05 — <tarea> | Fase 2 | ola: W2 | depende de: — | toca: src/main/java/.../X.java, src/test/java/.../XTest.java | ~1h | done: <criterio>
+```
+
+## Paralelización — olas de ejecución
+
+El plan no es solo un orden: es un **grafo de olas**. Una **ola** (`W1`, `W2`…) es un conjunto de
+tareas que pueden implementarse **a la vez** por implementers distintos sin pisarse.
+
+### Regla de elegibilidad
+
+Dos tareas comparten ola solo si cumplen las tres condiciones:
+
+1. **Sin dependencia**: ninguna depende de la otra, ni directa ni transitivamente.
+2. **Archivos disjuntos**: los conjuntos `toca:` no comparten ninguna ruta.
+3. **Sin dependencia de compilación**: ninguna crea un símbolo (clase, record, método, bean,
+   endpoint) que la otra consuma. Aunque los archivos difieran, si B usa lo que crea A, van en serie.
+
+> **Default seguro**: una tarea sin `toca:` declarado o con `toca: ?` se trata como **serial**
+> (una ola para ella sola). No adivines rutas: verificalas con `glob`/`grep` contra el repo real.
+
+### Archivos de frontera (serializan siempre)
+
+Si una tarea toca alguno de estos, va **sola** en su ola y su `toca:` lo marca con `SHARED(...)`:
+
+| Ruta | Por qué |
+| :--- | :--- |
+| `build.gradle.kts`, `settings.gradle.kts`, `gradle.properties` | build y versiones compartidas |
+| `src/main/resources/application*.yml` | configuración global |
+| `src/main/resources/db/migration/*` | orden de Flyway: dos migraciones simultáneas rompen la secuencia |
+| `@ControllerAdvice` / `ExceptionHandler` / mappers compartidos | punto único de cambio |
+| `specs/NNN-slug/tasks.md`, `specs/NNN-slug/state.json`, `specs/README.md` | escritura exclusiva del coordinator (ningún lane los toca) |
+| `docker-compose.yml`, `Dockerfile`, `.github/workflows/*` | infraestructura compartida |
+
+Regla adicional: **el test va en la misma tarea que su fuente**. Nunca separar `X.java` de
+`XTest.java` en lanes distintas, ni `XRepository` de su adapter de persistencia.
+
+### Algoritmo de asignación
+
+1. Ordená las tareas por dependencias y marcá el camino crítico.
+2. Tomá las tareas sin dependencia pendiente y agrupalas por disjunción de `toca:`.
+3. Ante conflicto de ruta → la segunda tarea pasa a la ola siguiente.
+4. **Máximo 3 lanes por ola.** Si hay más candidatas, priorizá las que desbloquean el camino crítico.
+5. Toda tarea que toque archivos de frontera queda sola en la ola.
+6. Cada ola cierra con **una** verificación completa (`./gradlew compileJava test`), hecha por el
+   coordinator, no por lane.
+
+En `plan.md` agregá la tabla de olas; en `tasks.md`, la ola en cada línea.
+
+```markdown
+## Olas de ejecución
+
+| Ola | Tareas en paralelo | Lanes | Serializa | Verificación de cierre |
+| :-- | :-- | :-- | :-- | :-- |
+| W1 | RNNN-T02, RNNN-T03, RNNN-T04 | 3 | — | `./gradlew compileJava test` |
+| W2 | RNNN-T05 | 1 | `build.gradle.kts` | `./gradlew check` |
+```
+
+Si el requerimiento no admite paralelismo, escribilo explícito (`W1`, `W2`… de una tarea cada una)
+y decí por qué en la columna `Serializa`. **No inventes paralelismo**: un lane mal separado cuesta
+más que ejecutar en serie.
+
 ## Metodología de Planificación
 
 1. **Descomposición vertical** — Cada tarea entrega valor comprobable (no capas horizontales).
 2. **Dependencias explícitas** — evita bloqueos y muestra el camino crítico.
-3. **Estimaciones realistas** — incluyen tests, docs y refactor.
-4. **Riesgo marcado** — Alto = revisión temprana.
-5. **Done Criteria medibles** — cada tarea se verifica con un comando, no con una opinión.
+3. **Paralelismo comprobado** — una ola se justifica con rutas `toca:` disjuntas, no con optimismo.
+4. **Estimaciones realistas** — incluyen tests, docs y refactor.
+5. **Riesgo marcado** — Alto = revisión temprana, y nunca en paralelo con otra tarea Alto.
+6. **Done Criteria medibles** — cada tarea se verifica con un comando, no con una opinión.
 
 ## Estado
 
 Al terminar, actualizá `specs/NNN-slug/state.json` y la fila de `specs/README.md`:
 - tras `plan.md` → estado `planned`
 - tras `tasks.md` → estado `ready`
+
+En `state.json` agregá `"currentWave": "W1"` (o `null` si el requerimiento es serial). El coordinator
+lo va moviendo al ejecutar.
 
 ## Herramientas
 - `read` — Leer spec del requerimiento, baseline, ADRs y código

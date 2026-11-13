@@ -34,7 +34,9 @@ o se itera.
 1. Si el prompt trae un número (`003`), auditá `specs/003-*/`.
 2. Si no, leé `specs/state.json` y usá `activeRequirement`.
 3. Leé `specs/NNN-slug/spec.md` y `specs/NNN-slug/tasks.md`. No audites otros requerimientos.
-4. Las **invariantes globales** salen de `AGENTS.md` + `specs/000-baseline-challenge/spec.md`; el
+4. Si el alcance indica una **ola** (`ola 2`, `W2`), auditá solo las tareas con esa `ola:` y los
+   archivos de su `toca:`. Un veredicto por ola, no por lane.
+5. Las **invariantes globales** salen de `AGENTS.md` + `specs/000-baseline-challenge/spec.md`; el
    spec del requerimiento solo documenta su delta.
 
 ## Criterios de Revisión (Checklist Obligatorio)
@@ -93,6 +95,13 @@ o se itera.
 - [ ] Swagger/OpenAPI actualizado si cambió un contrato
 - [ ] README o ADR actualizado si cambió una decisión de arquitectura
 - [ ] `specs/NNN-slug/tasks.md` marca `[x]` solo lo realmente hecho
+
+### 10. Integridad de la ola (si revisás una ola)
+- [ ] Ningún archivo de la ola fue modificado por dos lanes (revisá `git log`/`git diff` del alcance)
+- [ ] Cada tarea tocó solo rutas de su `toca:` declarado
+- [ ] Los archivos de frontera (`build.gradle.kts`, `application*.yml`, migraciones) se tocaron en
+      una tarea serial, no en paralelo
+- [ ] La verificación (`./gradlew compileJava test`) se corrió **después** de juntar todos los lanes
 
 ## Metodología de Revisión
 

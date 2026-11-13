@@ -23,9 +23,9 @@ el requerimiento es la unidad de cambio, de planificación y de revisión.
 ```text
 specs/NNN-slug/
 ├── spec.md       # qué se pide: alcance, reglas, criterios de aceptación, contratos
-├── plan.md       # cómo se hace: fases, dependencias, riesgos, DoD
-├── tasks.md      # checklist ejecutable: RNNN-T01, RNNN-T02…
-├── state.json    # fase/tarea actual, completadas, bloqueos, último veredicto
+├── plan.md       # cómo se hace: fases, dependencias, olas paralelizables, riesgos, DoD
+├── tasks.md      # checklist ejecutable: RNNN-T01… con ola: WN y toca: <rutas>
+├── state.json    # fase/ola/tarea actual, completadas, bloqueos, último veredicto
 └── review.md     # veredicto del reviewer y hallazgos (lo escribe el coordinator)
 ```
 
@@ -70,8 +70,8 @@ actualiza este índice y mueve el puntero de `state.json`. Después:
 
 ```text
 /sdd-clarify NNN   → resuelve ambigüedades
-/sdd-plan NNN      → genera plan.md
-/sdd-tasks NNN     → genera tasks.md
-/sdd-run NNN       → implementa
-/sdd-check NNN     → audita
+/sdd-plan NNN      → genera plan.md (con olas de ejecución)
+/sdd-tasks NNN     → genera tasks.md (con ola: y toca: por tarea)
+/sdd-run NNN       → implementa por olas (un implementer por lane)
+/sdd-check NNN     → audita la ola
 ```

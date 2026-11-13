@@ -6,6 +6,7 @@
 ## Resumen
 
 - **Fases**: <n> (<nombres>)
+- **Olas**: <n> (W1…Wn) — <tareas paralelizables totales>
 - **Horas estimadas**: <h>
 - **Camino crítico**: <RNNN-T01 → RNNN-T03 → ...>
 - **Riesgo mayor**: <tarea y por qué>
@@ -26,6 +27,17 @@
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | RNNN-T01 | <descripción accionable> | — | 1 h | Bajo | `<comando o criterio>` |
 | RNNN-T02 | <descripción accionable> | RNNN-T01 | 1 h | Medio | `<comando o criterio>` |
+
+## Olas de ejecución
+
+| Ola | Tareas en paralelo | Lanes | Serializa | Verificación de cierre |
+| :-- | :-- | :-- | :-- | :-- |
+| W1 | RNNN-T02, RNNN-T03, RNNN-T04 | 3 | — | `./gradlew compileJava test` |
+| W2 | RNNN-T05 | 1 | `build.gradle.kts` | `./gradlew check` |
+
+> Dos tareas comparten ola solo si no hay dependencia entre ellas y sus rutas `toca:` (en `tasks.md`)
+> son disjuntas. Archivos de frontera (`build.gradle.kts`, `application*.yml`, `db/migration`,
+> `ExceptionHandler`, `tasks.md`, `state.json`) serializan: la tarea va sola. Máximo 3 lanes.
 
 ## Camino crítico
 

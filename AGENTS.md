@@ -63,6 +63,18 @@ specs/
 - Las invariantes del proyecto viven en este archivo y en el baseline; **no se duplican** en cada
   spec.
 
+### Ejecución en olas
+
+`tasks.md` declara, por tarea, `ola: WN` y `toca: <rutas>` (las únicas que esa tarea puede editar).
+Dos tareas comparten ola solo si no hay dependencia entre ellas, sus rutas son disjuntas y ninguna
+crea un símbolo que la otra consuma. Máximo 3 lanes por ola.
+
+- `/sdd-run NNN ola N` lanza un `implementer` por lane, en paralelo, con whitelist de rutas.
+- Los implementers en paralelo **no** escriben `tasks.md`/`state.json` y **no** corren Gradle: eso lo
+  hace el coordinator al cerrar la ola (`git diff --name-only` + una sola verificación).
+- Archivos de frontera (`build.gradle.kts`, `application*.yml`, `db/migration/*`, `ExceptionHandler`)
+  serializan: la tarea que los toca va sola. Ante duda de solapamiento, serie.
+
 Ver `SDD_COMMANDS.md` y los comandos `/sdd-*` de `.opencode/commands/`.
 
 Antes de cambiar código: leé la tarea `RNNN-TXX` en `specs/NNN-slug/tasks.md`, el delta en

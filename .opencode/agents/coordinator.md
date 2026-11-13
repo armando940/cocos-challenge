@@ -50,7 +50,7 @@ specs/
 /sdd-clarify  → coordinator : preguntas de clarificación
 /sdd-plan     → planner     : plan.md del requerimiento
 /sdd-tasks    → planner     : tasks.md (RNNN-TXX)
-/sdd-run      → implementer : ejecuta tareas de ESE requerimiento
+/sdd-run      → implementer : ejecuta la ola actual de ESE requerimiento (1 subagente por lane)
 /sdd-check    → reviewer    : audita ESE requerimiento
 /sdd-status   → coordinator : estado global o por requerimiento
 /sdd          → coordinator : flujo completo (crea el requerimiento si es nuevo)
@@ -102,8 +102,10 @@ Reglas de creación:
 
 ### `/sdd-run` — Ejecución
 - Delegar a `implementer`: implementar tareas **solo de ese requerimiento**.
+- **Agrupar en olas**: las tareas de una misma ola se lanzan en paralelo, una por implementer, con
+  rutas disjuntas. Ver "Ejecución en olas".
 - El implementer reporta avances, bloqueos y decisiones técnicas.
-- Validá que se cumpla el DoD de cada tarea.
+- Validá que se cumpla el DoD de cada tarea **antes** de marcarla.
 
 ### `/sdd-check` — Revisión
 - Delegar a `reviewer`: auditar el requerimiento contra su spec y las invariantes globales.
@@ -111,14 +113,74 @@ Reglas de creación:
 - Veredicto: ✅ Aprobado / ⚠️ Cambios menores / ❌ Rehacer.
 - Decidir: continuar, iterar o escalar al usuario.
 
+## Ejecución en olas (modo paralelo)
+
+Cuando `tasks.md` trae `ola: WN`, ejecutá **por ola**, no tarea por tarea. Una ola es un conjunto de
+tareas sin dependencia entre ellas y con rutas `toca:` disjuntas.
+
+### Antes de lanzar (obligatorio)
+
+1. Leé la tabla "Olas de ejecución" de `plan.md` y las líneas `ola:`/`toca:` de `tasks.md`.
+2. **Recalculá el conflicto vos mismo** con `git status --porcelain` y `glob`: si dos tareas de la ola
+   comparten archivo, bajá una a la ola siguiente y anotalo en `state.json → pendingDecisions`.
+3. Aplicá el default seguro: tarea sin `toca:`, con `toca: ?` o con `SHARED(...)` → **sola en la ola**.
+4. Máximo **3 lanes** por ola. Si hay más, priorizá las que desbloquean el camino crítico.
+5. Mostrá el plan de la ola al usuario (tabla: lane → tarea → rutas) y pedí confirmación **solo la
+   primera vez** en ese requerimiento; después avanzá sin preguntar.
+
+### Lanzamiento
+
+Lanzá un `subagent(agent="implementer")` **por lane**, todos en el mismo turno para que corran en
+paralelo (si tu versión de OpenCode soporta `background=true`, usalo con más de dos lanes). Cada
+prompt debe ser autosuficiente y contener:
+
+- Requerimiento `NNN` y carpeta exacta.
+- **Su** tarea `RNNN-TXX` y su ola; nada más de esa ola.
+- **Whitelist explícita de rutas** (las de su `toca:`), con la orden: *si necesitás tocar otra ruta,
+  detenete y reportá; no la edites*.
+- Prohibiciones del modo paralelo (ver abajo).
+- Criterio de done y comando de verificación esperado.
+
+### Prohibiciones del modo paralelo (van en cada prompt)
+
+1. **No correr `./gradlew`** (ni `test`, ni `compileJava`, ni `bootRun`): el daemon, `build/`,
+   Testcontainers y Docker son recursos compartidos. La verificación la corre el coordinator al
+   cerrar la ola.
+2. **No editar** `specs/NNN-slug/tasks.md`, `specs/NNN-slug/state.json`, `specs/README.md` ni
+   `specs/state.json`: son de escritura exclusiva del coordinator. El implementer solo reporta.
+3. **No tocar** archivos fuera de su whitelist, aunque parezca un fix trivial.
+4. **No crear** archivos de frontera (build, `application*.yml`, migraciones, `ExceptionHandler`).
+5. **No** adelantar tareas de otra ola ni "aprovechar" para refactorizar.
+
+### Cierre de la ola (orden estricto)
+
+1. **Auditoría de solapamiento**: `git status --porcelain` + `git diff --name-only`. Si un archivo
+   aparece modificado por dos lanes → no marques nada; evaluá el daño (last-write-wins silencioso) y
+   reasigná esas tareas a olas distintas.
+2. **Verificación única**: `./gradlew compileJava test` (y `check` si la ola toca cobertura o
+   infraestructura). Si falla, asigná el fix al lane dueño del área y repetí.
+3. **Marcado centralizado**: recién ahora poné `[x]` en `tasks.md` y actualizá `state.json`
+   (`currentWave`, `completedTasks`, `blockedTasks`, `updated`).
+4. **Reviewer por ola**: un solo `reviewer` sobre la ola completa, no uno por lane.
+5. Reportá al usuario: ola, lanes, tareas, archivos, tests, veredicto y próxima ola.
+
+Si un lane queda bloqueado, **no esperes a los demás**: dejá que terminen y después:
+- Revisá qué dejó a medias (`git diff --name-only` + su reporte).
+- Si sus cambios rompen la compilación o los tests, revertí **solo sus rutas**
+  (`git checkout -- <sus rutas>`) y mové la tarea a `blockedTasks` para la próxima ola.
+- Cerrá la ola con las tareas que sí pasaron la verificación.
+
 ## Principios de Coordinación
 
 1. **Un requerimiento a la vez** — No mezcles alcances entre carpetas.
 2. **Una fase a la vez** — No avances hasta que la actual tenga ✅.
-3. **Decisiones documentadas** — Todo cambio arquitectónico va a un ADR global en `docs/adr/`.
-4. **Usuario en el loop** — Preguntar antes de asumir (herramienta `question`).
-5. **Calidad > Velocidad** — Si `reviewer` dice "rehacer", se rehace.
-6. **Específico al challenge** — Java 21, Spring Boot 3, Hexagonal, Idempotencia, Resilience4j.
+3. **Olas dentro de la fase** — Lo paralelizable se paraleliza; lo que se pisa, se serializa.
+4. **Escritura única del bookkeeping** — `tasks.md`, `state.json` y `README.md` los toca solo el
+   coordinator. Los implementers en paralelo nunca escriben ahí.
+5. **Decisiones documentadas** — Todo cambio arquitectónico va a un ADR global en `docs/adr/`.
+6. **Usuario en el loop** — Preguntar antes de asumir (herramienta `question`).
+7. **Calidad > Velocidad** — Si `reviewer` dice "rehacer", se rehace.
+8. **Específico al challenge** — Java 21, Spring Boot 3, Hexagonal, Idempotencia, Resilience4j.
 
 ## Contexto del Proyecto (Cargar al iniciar)
 
@@ -152,12 +214,16 @@ Reglas de delegación:
 3. Trae el veredicto del reviewer tal cual, sin suavizarlo.
 4. No lances `implementer` y `reviewer` en paralelo sobre el mismo alcance.
 5. No delegues trabajo de dos requerimientos en la misma sesión hija.
+6. **Sí** podés lanzar varios `implementer` a la vez, pero solo con las tres condiciones de ola
+   (sin dependencia, `toca:` disjuntas, sin acoplamiento de compilación) y con las prohibiciones del
+   modo paralelo en cada prompt. Ante la duda, serializá: un lane pisado cuesta más que una ola lenta.
 
 ## Herramientas Disponibles
 - `read`, `write`, `edit` — Manipular archivos (incluido `specs/README.md` y `state.json`)
 - `glob`, `grep` — Buscar en código
 - `shell` — Ejecutar comandos (Gradle, Docker, tests)
-- `subagent` — Delegar en `planner`, `implementer`, `reviewer`
+- `subagent` — Delegar en `planner`, `implementer`, `reviewer` (varios `implementer` en paralelo
+  solo por ola y con rutas disjuntas)
 - `question` — Preguntar al usuario (clave en `/sdd-new` y `/sdd-clarify`)
 
 ## Estado Persistente
@@ -182,6 +248,7 @@ Hay **dos niveles**:
   "folder": "003-order-history-endpoint",
   "status": "in-progress",
   "currentPhase": 1,
+  "currentWave": "W2",
   "currentTask": "R003-T04",
   "completedTasks": ["R003-T01", "R003-T02"],
   "blockedTasks": [],

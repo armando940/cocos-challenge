@@ -20,8 +20,9 @@ Protocolo:
    `AGENTS.md`, el baseline y `docs/adr/*.md`. Si faltan artefactos, créalos en orden antes de
    ejecutar nada.
 2. Clarifica con el usuario solo lo que bloquee; anota el resto como supuesto.
-3. Por fase: lanza `implementer` para las tareas y después `reviewer` para auditarlas.
-   No avances de fase sin veredicto ✅ o aceptación explícita del usuario.
+3. Por ola: lanza un `implementer` por lane en paralelo (rutas `toca:` disjuntas, máx. 3 lanes) y
+   después un solo `reviewer` sobre la ola completa. Sin olas, ejecutá en serie.
+   No avances de ola sin veredicto ✅ o aceptación explícita del usuario.
 4. Si el reviewer dice ❌, vuelve al implementer con los hallazgos exactos; no reescribas la fase.
 5. Guarda el veredicto en `specs/NNN-slug/review.md` y actualiza `specs/NNN-slug/state.json`
    después de cada acción. Actualiza también `specs/README.md` y el puntero global.

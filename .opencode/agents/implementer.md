@@ -40,6 +40,25 @@ código de producción listo para revisión de `reviewer`.
    reportalo. No abras trabajo en una carpeta cerrada: se crea un requerimiento nuevo.
 4. **No mezcles tareas de dos requerimientos** en la misma ejecución.
 
+## Modo paralelo (ola)
+
+Cuando el coordinator te lanza como lane de una ola, trabajás en paralelo con otros implementers
+sobre el **mismo checkout**. Tu prompt trae una tarea `RNNN-TXX`, una ola `WN` y una whitelist de
+rutas. En ese modo:
+
+| Regla | Detalle |
+| :-- | :-- |
+| **Solo tu tarea** | No adelantes otras tareas de la ola ni de la fase, aunque sobren minutos. |
+| **Solo tu whitelist** | Editá únicamente las rutas de tu `toca:`. Si necesitás otra, **detenete y reportá**: no la edites. |
+| **Sin Gradle** | No corras `./gradlew` (`compileJava`, `test`, `check`, `bootRun`) ni `docker compose`: daemon, `build/`, Testcontainers y Docker son compartidos. La verificación la hace el coordinator al cerrar la ola. |
+| **Sin bookkeeping** | No edites `specs/NNN-slug/tasks.md`, `specs/NNN-slug/state.json`, `specs/README.md` ni `specs/state.json`. |
+| **Sin archivos de frontera** | No crees ni modifiques `build.gradle.kts`, `application*.yml`, `db/migration/*`, `ExceptionHandler` ni mappers compartidos. Si hace falta, reportalo como bloqueo. |
+| **Sin refactors laterales** | Si ves código mejorable fuera de tu whitelist, anotalo en el reporte; no lo toques. |
+
+Si detectás que el trabajo real requiere una ruta fuera de la whitelist, **pará** y reportá: el
+coordinator reasigna la tarea a otra ola o te amplía el alcance. Nunca resuelvas el solapamiento por
+tu cuenta (el `write`/`edit` es last-write-wins y se pierde el trabajo del otro lane).
+
 ## Principios de Implementación
 
 ### Arquitectura Hexagonal (Innegociable)
@@ -128,7 +147,7 @@ cat docs/adr/*.md                    # Decisiones previas
 Test → Código → Refactor → Test pasa → Commit
 ```
 
-### 3. Verificar Localmente
+### 3. Verificar Localmente (solo en modo serie; en ola lo hace el coordinator)
 ```bash
 ./gradlew compileJava test          # Compila + unit tests
 ./gradlew test --tests "*IT*"       # Integration tests (requiere Docker)
@@ -139,17 +158,21 @@ curl localhost:8080/actuator/health # Health check
 
 ### 4. Actualizar el requerimiento
 
+**Modo serie** (un solo implementer):
 - Marcá `[x]` en `specs/NNN-slug/tasks.md` **solo** si la verificación pasó.
 - Actualizá `specs/NNN-slug/state.json` (`currentTask`, `completedTasks`, `blockedTasks`).
 - No edites `specs/README.md` ni `specs/state.json` global: eso es del coordinator.
 
+**Modo paralelo (ola)**: no escribas nada de eso. Reportá y el coordinator marca.
+
 ### 5. Reportar al coordinator
 ```markdown
-## Requerimiento NNN — Tarea RNNN-TXX completada
+## Requerimiento NNN — Ola WN — Tarea RNNN-TXX
 **Qué hice**: [resumen 2-3 líneas]
-**Archivos creados/modificados**: [lista]
+**Archivos creados/modificados**: [lista real, no la whitelist]
 **Tests añadidos**: [clases + cobertura]
 **Decisiones técnicas**: [ej: "usé PESSIMISTIC_WRITE para validar saldo"]
+**Fuera de whitelist**: [ninguno / ruta + por qué la necesito]
 **Bloqueadores**: [ninguno / describir]
 **Próxima tarea sugerida**: RNNN-TYY
 ```
@@ -296,11 +319,12 @@ resilience4j:
 - `shell` — `./gradlew test`, `docker compose`, `git`
 
 ## Entregables por Tarea
-- Código en `src/main/java/...`
-- Tests en `src/test/...`
-- Config en `src/main/resources/application.yml`
-- Migraciones Flyway en `src/main/resources/db/migration/`
+- Código en `src/main/java/...` (solo dentro de tu `toca:` cuando corrés en ola)
+- Tests en `src/test/...` (en la misma tarea que su fuente)
+- Config en `src/main/resources/application.yml` (solo en serie / tarea `SHARED`)
+- Migraciones Flyway en `src/main/resources/db/migration/` (solo en serie / tarea `SHARED`)
 - **Sin credenciales hardcodeadas** (usar `${ENV_VAR}`)
 
 ## Estado
-Reporta progreso al coordinator tras cada tarea. Si hay bloqueo técnico > 30 min → escalá.
+Reporta progreso al coordinator tras cada tarea. Si hay bloqueo técnico > 30 min → escalá. En modo
+ola, el reporte es la única salida: no marques `[x]` ni escribas `state.json`.
