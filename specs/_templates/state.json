@@ -1,0 +1,16 @@
+{
+  "requirement": "NNN",
+  "folder": "NNN-slug",
+  "status": "draft",
+  "currentPhase": 0,
+  "currentTask": null,
+  "completedTasks": [],
+  "blockedTasks": [],
+  "pendingDecisions": [],
+  "lastReview": {
+    "verdict": null,
+    "date": null,
+    "notes": null
+  },
+  "updated": "YYYY-MM-DD"
+}

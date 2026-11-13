@@ -1,0 +1,573 @@
+{
+  "info": {
+    "_postman_id": "c0c05c0a-0000-4000-8000-000000000001",
+    "name": "Cocos Challenge — Backend API",
+    "description": "Colección de requests para la API de trading/brokerage del challenge de Cocos Capital.\n\nIncluye el flujo completo: portfolio, búsqueda de instrumentos, órdenes MARKET/LIMIT, idempotencia, rechazos por saldo/tenencia y cancelación.\n\nRequisitos:\n- App corriendo en `http://localhost:8080` (o ajustar `baseUrl` en el environment).\n- Datos del seed V2 (`docker compose up -d postgres` + `bootRun`).\n\nOrden sugerido: ejecutar la colección de arriba hacia abajo.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "userId", "value": "1" },
+    { "key": "userIdWithoutCash", "value": "2" },
+    { "key": "arsId", "value": "1" },
+    { "key": "ggalId", "value": "2" },
+    { "key": "ypfdId", "value": "3" },
+    { "key": "aaplId", "value": "5" }
+  ],
+  "item": [
+    {
+      "name": "01 · Health",
+      "item": [
+        {
+          "name": "Health check",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('Aplicación UP', () => pm.expect(body.status).to.eql('UP'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/actuator/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["actuator", "health"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 · Portfolio",
+      "item": [
+        {
+          "name": "Portfolio inicial (user 1)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('Tiene userId', () => pm.expect(body.userId).to.eql(1));",
+                  "pm.test('Tiene availableCash', () => pm.expect(body.availableCash).to.be.a('string'));",
+                  "pm.test('Tiene totalAccountValue', () => pm.expect(body.totalAccountValue).to.be.a('string'));",
+                  "pm.test('Posiciones es un array', () => pm.expect(body.positions).to.be.an('array'));",
+                  "pm.test('Seed: 100 GGAL', () => {",
+                  "  const ggal = body.positions.find(p => p.ticker === 'GGAL');",
+                  "  pm.expect(ggal.quantity).to.eql(100);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/portfolio/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "portfolio", "{{userId}}"]
+            }
+          }
+        },
+        {
+          "name": "Portfolio final (user 1)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('Posiciones después de las compras', () => pm.expect(body.positions.length).to.be.at.least(1));",
+                  "pm.collectionVariables.set('finalAvailableCash', body.availableCash);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/portfolio/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "portfolio", "{{userId}}"]
+            }
+          }
+        },
+        {
+          "name": "Portfolio usuario sin saldo (user 2)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('Sin posiciones', () => pm.expect(body.positions).to.have.lengthOf(0));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/portfolio/{{userIdWithoutCash}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "portfolio", "{{userIdWithoutCash}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 · Instrumentos",
+      "item": [
+        {
+          "name": "Buscar por ticker (GG)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('Encuentra GGAL', () => {",
+                  "  pm.expect(body.content.some(i => i.ticker === 'GGAL')).to.be.true;",
+                  "});",
+                  "pm.test('Incluye precio actual', () => {",
+                  "  const ggal = body.content.find(i => i.ticker === 'GGAL');",
+                  "  pm.expect(Number(ggal.currentPrice)).to.be.greaterThan(0);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/instruments/search?q=GG&page=0&size=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "instruments", "search"],
+              "query": [
+                { "key": "q", "value": "GG" },
+                { "key": "page", "value": "0" },
+                { "key": "size", "value": "20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Buscar por nombre (galicia)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('Encuentra Grupo Financiero Galicia', () => {",
+                  "  pm.expect(body.content.some(i => i.name.includes('Galicia'))).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/instruments/search?q=galicia&page=0&size=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "instruments", "search"],
+              "query": [
+                { "key": "q", "value": "galicia" },
+                { "key": "page", "value": "0" },
+                { "key": "size", "value": "20" }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "04 · Órdenes (camino feliz)",
+      "item": [
+        {
+          "name": "MARKET BUY por size",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.collectionVariables.get('marketKey')) {",
+                  "  pm.collectionVariables.set('marketKey', pm.variables.replaceIn('{{$guid}}'));",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 201', () => pm.response.to.have.status(201));",
+                  "const body = pm.response.json();",
+                  "pm.test('Queda FILLED', () => pm.expect(body.status).to.eql('FILLED'));",
+                  "pm.test('Tiene precio de ejecución', () => pm.expect(Number(body.executedPrice)).to.be.greaterThan(0));",
+                  "pm.collectionVariables.set('marketOrderId', body.orderId);",
+                  "pm.collectionVariables.set('marketOrderDatetime', body.datetime);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": {{userId}},\n  \"instrumentId\": {{ypfdId}},\n  \"side\": \"BUY\",\n  \"type\": \"MARKET\",\n  \"size\": 10,\n  \"idempotencyKey\": \"{{marketKey}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/orders",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "orders"]
+            }
+          }
+        },
+        {
+          "name": "Reintento idéntico (idempotencia)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.collectionVariables.get('marketKey')) {",
+                  "  pm.collectionVariables.set('marketKey', pm.variables.replaceIn('{{$guid}}'));",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 201', () => pm.response.to.have.status(201));",
+                  "const body = pm.response.json();",
+                  "pm.test('Devuelve la MISMA orden', () => {",
+                  "  pm.expect(body.orderId).to.eql(pm.collectionVariables.get('marketOrderId'));",
+                  "});",
+                  "pm.test('Mismo datetime', () => {",
+                  "  pm.expect(body.datetime).to.eql(pm.collectionVariables.get('marketOrderDatetime'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": {{userId}},\n  \"instrumentId\": {{ypfdId}},\n  \"side\": \"BUY\",\n  \"type\": \"MARKET\",\n  \"size\": 10,\n  \"idempotencyKey\": \"{{marketKey}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/orders",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "orders"]
+            }
+          }
+        },
+        {
+          "name": "Misma key, request distinto (409)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 409', () => pm.response.to.have.status(409));",
+                  "pm.test('Título de conflicto', () => {",
+                  "  pm.expect(pm.response.json().title).to.match(/idempotencia/i);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": {{userId}},\n  \"instrumentId\": {{ypfdId}},\n  \"side\": \"BUY\",\n  \"type\": \"MARKET\",\n  \"size\": 11,\n  \"idempotencyKey\": \"{{marketKey}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/orders",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "orders"]
+            }
+          }
+        },
+        {
+          "name": "MARKET BUY por amount",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 201', () => pm.response.to.have.status(201));",
+                  "const body = pm.response.json();",
+                  "pm.test('Queda FILLED', () => pm.expect(body.status).to.eql('FILLED'));",
+                  "pm.test('Calcula acciones enteras (floor)', () => {",
+                  "  pm.expect(body.executedSize).to.be.greaterThan(0);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": {{userId}},\n  \"instrumentId\": {{aaplId}},\n  \"side\": \"BUY\",\n  \"type\": \"MARKET\",\n  \"amount\": 50000,\n  \"idempotencyKey\": \"{{$guid}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/orders",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "orders"]
+            }
+          }
+        },
+        {
+          "name": "LIMIT BUY → NEW",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 201', () => pm.response.to.have.status(201));",
+                  "const body = pm.response.json();",
+                  "pm.test('Queda NEW (no se ejecuta)', () => pm.expect(body.status).to.eql('NEW'));",
+                  "pm.collectionVariables.set('limitOrderId', body.orderId);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": {{userId}},\n  \"instrumentId\": {{ggalId}},\n  \"side\": \"BUY\",\n  \"type\": \"LIMIT\",\n  \"price\": 10000,\n  \"size\": 5,\n  \"idempotencyKey\": \"{{$guid}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/orders",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "orders"]
+            }
+          }
+        },
+        {
+          "name": "Cancelar LIMIT → CANCELLED",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('Queda CANCELLED', () => pm.expect(body.status).to.eql('CANCELLED'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/orders/{{limitOrderId}}/cancel",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "orders", "{{limitOrderId}}", "cancel"]
+            }
+          }
+        },
+        {
+          "name": "Cancelar de nuevo → 409",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 409', () => pm.response.to.have.status(409));",
+                  "pm.test('Título no cancelable', () => {",
+                  "  pm.expect(pm.response.json().title).to.match(/no puede cancelarse/i);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/orders/{{limitOrderId}}/cancel",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "orders", "{{limitOrderId}}", "cancel"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "05 · Rechazos y validación",
+      "item": [
+        {
+          "name": "BUY sin saldo → 400 REJECTED",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 400', () => pm.response.to.have.status(400));",
+                  "const body = pm.response.json();",
+                  "pm.test('Queda REJECTED', () => pm.expect(body.status).to.eql('REJECTED'));",
+                  "pm.test('Razón INSUFFICIENT_CASH', () => pm.expect(body.rejectionReason).to.eql('INSUFFICIENT_CASH'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": {{userIdWithoutCash}},\n  \"instrumentId\": {{ggalId}},\n  \"side\": \"BUY\",\n  \"type\": \"MARKET\",\n  \"size\": 100,\n  \"idempotencyKey\": \"{{$guid}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/orders",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "orders"]
+            }
+          }
+        },
+        {
+          "name": "SELL sin tenencia → 400 REJECTED",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 400', () => pm.response.to.have.status(400));",
+                  "const body = pm.response.json();",
+                  "pm.test('Queda REJECTED', () => pm.expect(body.status).to.eql('REJECTED'));",
+                  "pm.test('Razón INSUFFICIENT_SHARES', () => pm.expect(body.rejectionReason).to.eql('INSUFFICIENT_SHARES'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": {{userId}},\n  \"instrumentId\": {{ggalId}},\n  \"side\": \"SELL\",\n  \"type\": \"MARKET\",\n  \"size\": 999,\n  \"idempotencyKey\": \"{{$guid}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/orders",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "orders"]
+            }
+          }
+        },
+        {
+          "name": "size + amount juntos → 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 400', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": {{userId}},\n  \"instrumentId\": {{ggalId}},\n  \"side\": \"BUY\",\n  \"type\": \"MARKET\",\n  \"size\": 1,\n  \"amount\": 1000,\n  \"idempotencyKey\": \"{{$guid}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/orders",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "orders"]
+            }
+          }
+        },
+        {
+          "name": "Instrumento inexistente → 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 404', () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": {{userId}},\n  \"instrumentId\": 999999,\n  \"side\": \"BUY\",\n  \"type\": \"MARKET\",\n  \"size\": 1,\n  \"idempotencyKey\": \"{{$guid}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/orders",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "orders"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,165 @@
+spring:
+  application:
+    name: cocos-challenge
+  
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:local}
+  
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/cocos_challenge}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+  
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        order_inserts: true
+        order_updates: true
+        jdbc:
+          batch_size: 20
+          lob:
+            non_contextual_creation: true
+  
+  flyway:
+    enabled: true
+    locations: ${FLYWAY_LOCATIONS:classpath:db/migration,classpath:db/seed}
+    baseline-on-migrate: true
+    validate-on-migrate: true
+  
+  cache:
+    type: caffeine
+    # TTL por cache (search 10m, precios 1m, instruments 10m) en
+    # infrastructure/config/CacheConfig.
+  
+  # Configuración para Testcontainers en tests
+  test:
+    database:
+      replace: none
+
+# Server
+server:
+  port: 8080
+  error:
+    include-message: always
+    include-binding-errors: always
+    include-stacktrace: on_param
+
+# OpenAPI / Swagger
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
+    tags-sorter: alpha
+  packages-to-scan: ar.com.cocos.challenge.infrastructure.adapter.in.web
+  paths-to-match: /api/v1/**
+
+# Actuator / Observabilidad
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus,caches,loggers,httpexchanges
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: always
+      probes:
+        enabled: true
+  health:
+    db:
+      enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}
+    export:
+      prometheus:
+        enabled: true
+    distribution:
+      percentiles-histogram:
+        "[http.server.requests]": true
+        "[resilience4j.circuitbreaker.calls]": true
+      percentiles:
+        "[http.server.requests]": 0.5, 0.95, 0.99
+        "[resilience4j.circuitbreaker.calls]": 0.5, 0.95, 0.99
+
+# Logging
+logging:
+  pattern:
+    console: "%d{ISO8601} %5p [%15.15t] %-40.40logger{39} : %m%n"
+  level:
+    root: INFO
+    ar.com.cocos.challenge: DEBUG
+    org.springframework.web: DEBUG
+    org.hibernate.SQL: WARN
+    org.flywaydb: INFO
+
+# Resilience4j
+resilience4j:
+  circuitbreaker:
+    instances:
+      marketData:
+        registerHealthIndicator: true
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        waitDurationInOpenState: 30s
+        failureRateThreshold: 50
+        eventConsumerBufferSize: 10
+        recordExceptions:
+          - org.springframework.dao.DataAccessException
+          - java.io.IOException
+          - java.util.concurrent.TimeoutException
+  retry:
+    instances:
+      marketData:
+        maxAttempts: 3
+        waitDuration: 500ms
+        enableExponentialBackoff: true
+        exponentialBackoffMultiplier: 2.0
+        jitter: 0.1
+        retryExceptions:
+          - org.springframework.dao.DataAccessException
+          - java.io.IOException
+          - java.util.concurrent.TimeoutException
+  bulkhead:
+    instances:
+      marketData:
+        maxConcurrentCalls: 10
+        maxWaitDuration: 0ms
+  timelimiter:
+    instances:
+      marketData:
+        timeoutDuration: 2s
+        cancelRunningFuture: true
+
+# Cache names (referenciados en @Cacheable)
+cache:
+  names:
+    instrument-search: "instrument-search"
+    latest-market-prices: "latest-market-prices"
+    all-instruments: "all-instruments"
+
+# App specific
+app:
+  idempotency:
+    ttl-hours: 24
+    cleanup-enabled: true
+  orders:
+    max-size: 1000000
+  portfolio:
+    calculation-batch-size: 100

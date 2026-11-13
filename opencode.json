@@ -1,0 +1,10 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "model": "freellmapi/auto",
+  "default_agent": "coordinator",
+  "agents": {
+    "reviewer": {
+      "model": "freellmapi/auto"
+    }
+  }
+}
