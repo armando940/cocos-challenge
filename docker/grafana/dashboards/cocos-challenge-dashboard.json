@@ -1,0 +1,295 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": "-- Grafana --",
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "gnetId": null,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "thresholds"},
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"color": "green", "value": null},
+              {"color": "red", "value": 1}
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {"h": 4, "w": 6, "x": 0, "y": 0},
+      "id": 1,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {"values": false, "calcs": ["lastNotNull"], "fields": ""},
+        "textMode": "auto"
+      },
+      "pluginVersion": "10.4.0",
+      "targets": [
+        {
+          "expr": "jvm_memory_used_bytes{area=\"heap\"} / jvm_memory_max_bytes{area=\"heap\"} * 100",
+          "legendFormat": "Heap Usage %",
+          "refId": "A"
+        }
+      ],
+      "title": "JVM Heap Usage %",
+      "type": "gauge"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "custom": {"axisLabel": "", "axisPlacement": "auto", "barAlignment": 0, "drawStyle": "line", "fillOpacity": 10, "gradientMode": "none", "hideFrom": {"tooltip": false, "viz": false, "legend": false}, "lineInterpolation": "linear", "lineWidth": 1, "pointSize": 5, "scaleDistribution": {"type": "linear"}, "showPoints": "never", "spanNulls": true},
+          "mappings": [],
+          "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]},
+          "unit": "reqps"
+        },
+        "overrides": []
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 6, "y": 0},
+      "id": 2,
+      "options": {"legend": {"calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "single", "sort": "none"}},
+      "pluginVersion": "10.4.0",
+      "targets": [
+        {
+          "expr": "rate(http_server_requests_seconds_count{application=\"cocos-challenge\"}[1m])",
+          "legendFormat": "{{uri}} {{method}}",
+          "refId": "A"
+        }
+      ],
+      "title": "HTTP Request Rate (req/s)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "custom": {"axisLabel": "", "axisPlacement": "auto", "barAlignment": 0, "drawStyle": "line", "fillOpacity": 10, "gradientMode": "none", "hideFrom": {"tooltip": false, "viz": false, "legend": false}, "lineInterpolation": "linear", "lineWidth": 1, "pointSize": 5, "scaleDistribution": {"type": "linear"}, "showPoints": "never", "spanNulls": true},
+          "mappings": [],
+          "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]},
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 18, "y": 0},
+      "id": 3,
+      "options": {"legend": {"calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "single", "sort": "none"}},
+      "pluginVersion": "10.4.0",
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket{application=\"cocos-challenge\"}[1m])) by (le, uri))",
+          "legendFormat": "p95 {{uri}}",
+          "refId": "A"
+        },
+        {
+          "expr": "histogram_quantile(0.99, sum(rate(http_server_requests_seconds_bucket{application=\"cocos-challenge\"}[1m])) by (le, uri))",
+          "legendFormat": "p99 {{uri}}",
+          "refId": "B"
+        }
+      ],
+      "title": "HTTP Latency p95/p99",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "thresholds"},
+          "mappings": [
+            {"type": "value", "options": {"0": {"color": "green", "index": 0, "text": "CLOSED"}, "1": {"color": "yellow", "index": 1, "text": "OPEN"}, "2": {"color": "red", "index": 2, "text": "HALF_OPEN"}}}
+          ],
+          "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]},
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {"h": 4, "w": 6, "x": 24, "y": 0},
+      "id": 4,
+      "options": {"colorMode": "value", "graphMode": "none", "justifyMode": "auto", "orientation": "auto", "reduceOptions": {"values": false, "calcs": ["lastNotNull"], "fields": ""}, "text": {"fontSize": 48}, "textMode": "value"},
+      "pluginVersion": "10.4.0",
+      "targets": [
+        {
+          "expr": "resilience4j_circuitbreaker_state{application=\"cocos-challenge\",name=\"marketData\"}",
+          "legendFormat": "MarketData CB",
+          "refId": "A"
+        }
+      ],
+      "title": "Circuit Breaker State (marketData)",
+      "type": "stat"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "custom": {"axisLabel": "", "axisPlacement": "auto", "barAlignment": 0, "drawStyle": "line", "fillOpacity": 10, "gradientMode": "none", "hideFrom": {"tooltip": false, "viz": false, "legend": false}, "lineInterpolation": "linear", "lineWidth": 1, "pointSize": 5, "scaleDistribution": {"type": "linear"}, "showPoints": "never", "spanNulls": true},
+          "mappings": [],
+          "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]},
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 4},
+      "id": 5,
+      "options": {"legend": {"calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "single", "sort": "none"}},
+      "pluginVersion": "10.4.0",
+      "targets": [
+        {
+          "expr": "rate(resilience4j_circuitbreaker_calls_total{application=\"cocos-challenge\",name=\"marketData\",kind=\"successful\"}[1m])",
+          "legendFormat": "Successful",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(resilience4j_circuitbreaker_calls_total{application=\"cocos-challenge\",name=\"marketData\",kind=\"failed\"}[1m])",
+          "legendFormat": "Failed",
+          "refId": "B"
+        },
+        {
+          "expr": "rate(resilience4j_circuitbreaker_calls_total{application=\"cocos-challenge\",name=\"marketData\",kind=\"rejected\"}[1m])",
+          "legendFormat": "Rejected (CB Open)",
+          "refId": "C"
+        }
+      ],
+      "title": "Circuit Breaker Calls Rate (marketData)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "custom": {"axisLabel": "", "axisPlacement": "auto", "barAlignment": 0, "drawStyle": "line", "fillOpacity": 10, "gradientMode": "none", "hideFrom": {"tooltip": false, "viz": false, "legend": false}, "lineInterpolation": "linear", "lineWidth": 1, "pointSize": 5, "scaleDistribution": {"type": "linear"}, "showPoints": "never", "spanNulls": true},
+          "mappings": [],
+          "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]},
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 4},
+      "id": 6,
+      "options": {"legend": {"calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "single", "sort": "none"}},
+      "pluginVersion": "10.4.0",
+      "targets": [
+        {
+          "expr": "cache_gets_total{application=\"cocos-challenge\",name=\"instrument-search\"}",
+          "legendFormat": "Gets - instrument-search",
+          "refId": "A"
+        },
+        {
+          "expr": "cache_hits_total{application=\"cocos-challenge\",name=\"instrument-search\"}",
+          "legendFormat": "Hits - instrument-search",
+          "refId": "B"
+        },
+        {
+          "expr": "cache_misses_total{application=\"cocos-challenge\",name=\"instrument-search\"}",
+          "legendFormat": "Misses - instrument-search",
+          "refId": "C"
+        }
+      ],
+      "title": "Cache Stats - Instrument Search",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "custom": {"axisLabel": "", "axisPlacement": "auto", "barAlignment": 0, "drawStyle": "line", "fillOpacity": 10, "gradientMode": "none", "hideFrom": {"tooltip": false, "viz": false, "legend": false}, "lineInterpolation": "linear", "lineWidth": 1, "pointSize": 5, "scaleDistribution": {"type": "linear"}, "showPoints": "never", "spanNulls": true},
+          "mappings": [],
+          "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]},
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 24, "y": 4},
+      "id": 7,
+      "options": {"legend": {"calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "single", "sort": "none"}},
+      "pluginVersion": "10.4.0",
+      "targets": [
+        {
+          "expr": "cache_gets_total{application=\"cocos-challenge\",name=\"latest-market-prices\"}",
+          "legendFormat": "Gets - market-prices",
+          "refId": "A"
+        },
+        {
+          "expr": "cache_hits_total{application=\"cocos-challenge\",name=\"latest-market-prices\"}",
+          "legendFormat": "Hits - market-prices",
+          "refId": "B"
+        },
+        {
+          "expr": "cache_misses_total{application=\"cocos-challenge\",name=\"latest-market-prices\"}",
+          "legendFormat": "Misses - market-prices",
+          "refId": "C"
+        }
+      ],
+      "title": "Cache Stats - Market Prices",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "custom": {"axisLabel": "", "axisPlacement": "auto", "barAlignment": 0, "drawStyle": "line", "fillOpacity": 10, "gradientMode": "none", "hideFrom": {"tooltip": false, "viz": false, "legend": false}, "lineInterpolation": "linear", "lineWidth": 1, "pointSize": 5, "scaleDistribution": {"type": "linear"}, "showPoints": "never", "spanNulls": true},
+          "mappings": [],
+          "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]},
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {"h": 8, "w": 24, "x": 0, "y": 12},
+      "id": 8,
+      "options": {"legend": {"calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "single", "sort": "none"}},
+      "pluginVersion": "10.4.0",
+      "targets": [
+        {
+          "expr": "rate(jvm_gc_pause_seconds_sum{application=\"cocos-challenge\"}[1m]) / rate(jvm_gc_pause_seconds_count{application=\"cocos-challenge\"}[1m])",
+          "legendFormat": "Avg GC Pause",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(jvm_gc_pause_seconds_count{application=\"cocos-challenge\"}[1m])",
+          "legendFormat": "GC Count/min",
+          "refId": "B"
+        }
+      ],
+      "title": "JVM GC Metrics",
+      "type": "timeseries"
+    }
+  ],
+  "refresh": "10s",
+  "schemaVersion": 38,
+  "style": "dark",
+  "tags": ["cocos-challenge", "spring-boot", "resilience4j", "cache"],
+  "templating": {"list": []},
+  "time": {"from": "now-1h", "to": "now"},
+  "timepicker": {},
+  "timezone": "",
+  "title": "Cocos Challenge - Application Dashboard",
+  "uid": "cocos-challenge",
+  "version": 1,
+  "weekStart": ""
+}

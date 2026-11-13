@@ -1,0 +1,10 @@
+# Perfil de producción (Neon PostgreSQL).
+# Sin valores por defecto: todo se inyecta por variables de entorno.
+spring:
+  datasource:
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+  flyway:
+    # En producción sólo migraciones de esquema: nunca el seed de desarrollo
+    locations: classpath:db/migration

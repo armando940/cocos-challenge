@@ -1,0 +1,14 @@
+{
+  "activeRequirement": null,
+  "requirements": [
+    {
+      "id": "000",
+      "folder": "000-baseline-challenge",
+      "title": "Backend challenge Cocos (base implementada)",
+      "type": "baseline",
+      "status": "done",
+      "updated": "2026-11-12"
+    }
+  ],
+  "lastUpdated": "2026-11-12"
+}

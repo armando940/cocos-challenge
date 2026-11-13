@@ -1,0 +1,29 @@
+# Build outputs
+build/
+out/
+bin/
+.gradle/
+
+# Logs
+*.log
+logs/
+
+# IDE
+.idea/
+*.iml
+.project
+.classpath
+.settings/
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Env & secrets
+.env
+.env.*
+*.pem
+
+# Docker
+docker-compose.override.yml
