@@ -1,7 +1,6 @@
 package ar.com.cocos.challenge.domain.model;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.Objects;
 
 /**

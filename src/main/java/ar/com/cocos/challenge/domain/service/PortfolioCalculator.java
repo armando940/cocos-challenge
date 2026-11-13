@@ -1,13 +1,20 @@
 package ar.com.cocos.challenge.domain.service;
 
-import ar.com.cocos.challenge.domain.model.*;
+import ar.com.cocos.challenge.domain.model.Instrument;
+import ar.com.cocos.challenge.domain.model.MarketPrice;
+import ar.com.cocos.challenge.domain.model.Money;
+import ar.com.cocos.challenge.domain.model.Order;
+import ar.com.cocos.challenge.domain.model.Portfolio;
+import ar.com.cocos.challenge.domain.model.Position;
 import ar.com.cocos.challenge.domain.port.out.InstrumentRepositoryPort;
 import ar.com.cocos.challenge.domain.port.out.MarketDataProviderPort;
 import ar.com.cocos.challenge.domain.port.out.OrderRepositoryPort;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**

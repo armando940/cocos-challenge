@@ -1,5 +1,5 @@
 {
-  "activeRequirement": null,
+  "activeRequirement": "001-remove-unused-imports",
   "requirements": [
     {
       "id": "000",
@@ -8,7 +8,15 @@
       "type": "baseline",
       "status": "done",
       "updated": "2026-11-12"
+    },
+    {
+      "id": "001",
+      "folder": "001-remove-unused-imports",
+      "title": "Remover imports no utilizados del proyecto",
+      "type": "refactor",
+      "status": "done",
+      "updated": "2026-11-13"
     }
   ],
-  "lastUpdated": "2026-11-12"
+  "lastUpdated": "2026-11-13"
 }

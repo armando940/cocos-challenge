@@ -1,7 +1,5 @@
 package ar.com.cocos.challenge.domain.model;
 
-import ar.com.cocos.challenge.domain.model.Money;
-
 /**
  * Excepción cuando el usuario no tiene pesos suficientes para una compra.
  */

@@ -1,6 +1,12 @@
 package ar.com.cocos.challenge.infrastructure.adapter.in.web;
 
-import ar.com.cocos.challenge.domain.model.*;
+import ar.com.cocos.challenge.domain.model.IdempotencyConflictException;
+import ar.com.cocos.challenge.domain.model.InstrumentNotFoundException;
+import ar.com.cocos.challenge.domain.model.InstrumentPriceNotFoundException;
+import ar.com.cocos.challenge.domain.model.InsufficientCashException;
+import ar.com.cocos.challenge.domain.model.InsufficientSharesException;
+import ar.com.cocos.challenge.domain.model.OrderCannotBeCancelledException;
+import ar.com.cocos.challenge.domain.model.OrderNotFoundException;
 import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -11,7 +17,6 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 
 import java.net.URI;
-import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 
