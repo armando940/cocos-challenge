@@ -10,13 +10,14 @@ el requerimiento es la unidad de cambio, de planificación y de revisión.
 | :--- | :--- | :--- | :--- | :--- | :---: | :--- |
 | 000 | [`000-baseline-challenge/`](000-baseline-challenge/spec.md) | Backend challenge Cocos (base implementada) | baseline | ✅ done | — | 2026-11-12 · ✅ aprobado |
 | 001 | [`001-remove-unused-imports/`](001-remove-unused-imports/spec.md) | Remover imports no utilizados del proyecto | refactor | ✅ done | ✅ | 2026-11-13 · ✅ aprobado |
+| 002 | [`002-fix-ci-secrets-if/`](002-fix-ci-secrets-if/spec.md) | Arreglar workflow CI: `secrets` inválido en `if` | bugfix | ✅ done | ✅ | 2026-11-13 · ✅ aprobado |
 
-> Próximo número libre: **002**. Se asigna con `/sdd-new`, no a mano.
+> Próximo número libre: **003**. Se asigna con `/sdd-new`, no a mano.
 > El baseline `000` conserva los IDs legacy `T-XX`; los requerimientos nuevos usan `RNNN-TXX`.
 
 > El requerimiento **activo** es el que figura en [`state.json`](state.json) (`activeRequirement`).
 > Solo puede haber uno activo a la vez; el resto queda `paused` hasta que se retome.
-> Hoy no hay ninguno activo: el baseline está cerrado. El próximo se crea con `/sdd-new`.
+> Hoy no hay ninguno activo: 000, 001 y 002 están cerrados. El próximo se crea con `/sdd-new`.
 
 ## Estructura de una carpeta
 

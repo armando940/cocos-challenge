@@ -1,0 +1,17 @@
+{
+  "requirement": "002",
+  "folder": "002-fix-ci-secrets-if",
+  "status": "done",
+  "currentPhase": 1,
+  "currentWave": "W1",
+  "currentTask": null,
+  "completedTasks": ["R002-T01"],
+  "blockedTasks": [],
+  "pendingDecisions": [],
+  "lastReview": {
+    "verdict": "approved",
+    "date": "2026-11-13",
+    "notes": "Ola W1 aprobada sin hallazgos bloqueantes. Diff 0+/1− en ci.yml, YAML parsea OK (3 jobs intactos), gate T-47 (vars.ENABLE_DOCKER_PUBLISH == 'true') intacto, compileJava verde. Menores: release depende de docker-build en forks (pre-existente); actionlint no disponible, suplido con yaml.safe_load."
+  },
+  "updated": "2026-11-13"
+}
