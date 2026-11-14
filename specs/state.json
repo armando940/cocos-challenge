@@ -40,6 +40,14 @@
       "type": "bugfix",
       "status": "done",
       "updated": "2026-11-14"
+    },
+    {
+      "id": "005",
+      "folder": "005-fix-balance-validation-race",
+      "title": "Eliminar race condition en la validación de saldo (lock pesimista por usuario)",
+      "type": "bugfix",
+      "status": "done",
+      "updated": "2026-11-14"
     }
   ],
   "lastUpdated": "2026-11-14"

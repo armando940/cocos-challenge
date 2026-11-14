@@ -1,0 +1,25 @@
+{
+  "requirement": "005",
+  "folder": "005-fix-balance-validation-race",
+  "status": "done",
+  "currentPhase": 3,
+  "currentWave": "W3",
+  "currentTask": null,
+  "completedTasks": [
+    "R005-T01",
+    "R005-T02",
+    "R005-T03",
+    "R005-T04",
+    "R005-T05",
+    "R005-T06",
+    "R005-T07"
+  ],
+  "blockedTasks": [],
+  "pendingDecisions": [],
+  "lastReview": {
+    "verdict": "approved",
+    "date": "2026-11-14",
+    "notes": "✅ Aprobado. Lock pesimista por usuario en PlaceOrderUseCase; 7 tests nuevos; ./gradlew test y check verdes."
+  },
+  "updated": "2026-11-14"
+}

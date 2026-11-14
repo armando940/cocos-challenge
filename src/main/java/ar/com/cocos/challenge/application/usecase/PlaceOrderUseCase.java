@@ -17,6 +17,7 @@ import ar.com.cocos.challenge.domain.port.out.EventPublisherPort;
 import ar.com.cocos.challenge.domain.port.out.IdempotencyStorePort;
 import ar.com.cocos.challenge.domain.port.out.InstrumentRepositoryPort;
 import ar.com.cocos.challenge.domain.port.out.OrderRepositoryPort;
+import ar.com.cocos.challenge.domain.port.out.UserRepositoryPort;
 import ar.com.cocos.challenge.domain.service.BalanceValidator;
 import ar.com.cocos.challenge.domain.service.OrderMatcher;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -51,6 +52,7 @@ public class PlaceOrderUseCase implements PlaceOrderPort {
 
     private final OrderRepositoryPort orderRepository;
     private final InstrumentRepositoryPort instrumentRepository;
+    private final UserRepositoryPort userRepositoryPort;
     private final IdempotencyStorePort idempotencyStore;
     private final BalanceValidator balanceValidator;
     private final OrderMatcher orderMatcher;
@@ -72,17 +74,20 @@ public class PlaceOrderUseCase implements PlaceOrderPort {
             return deserializeResult(key.responseBody());
         }
 
-        // 2. Validar instrumento existe
+        // 2. Lock pesimista por usuario: serializa las órdenes del mismo usuario hasta el commit y se toma antes de leer las órdenes FILLED en balanceValidator.validate
+        userRepositoryPort.lockById(command.userId());
+
+        // 3. Validar instrumento existe
         Instrument instrument = instrumentRepository.findById(command.instrumentId())
                 .orElseThrow(() -> new InstrumentNotFoundException(command.instrumentId()));
 
-        // 3. Crear orden (calcula size si viene amount)
+        // 4. Crear orden (calcula size si viene amount)
         Order order = orderMatcher.createOrder(command, instrument);
 
-        // 4. Precio de referencia: LIMIT usa el enviado, MARKET el último close
+        // 5. Precio de referencia: LIMIT usa el enviado, MARKET el último close
         BigDecimal referencePrice = orderMatcher.resolveExecutionPrice(command);
 
-        // 5. Validar saldo/tenencia. Si no alcanza, la orden se guarda REJECTED.
+        // 6. Validar saldo/tenencia. Si no alcanza, la orden se guarda REJECTED.
         try {
             balanceValidator.validate(command.userId(), command.side(), order.size(), referencePrice, instrument);
         } catch (InsufficientCashException | InsufficientSharesException ex) {
@@ -91,18 +96,18 @@ public class PlaceOrderUseCase implements PlaceOrderPort {
             return persistRejected(command, order, ex);
         }
 
-        // 6. Guardar orden inicial (NEW)
+        // 7. Guardar orden inicial (NEW)
         order = orderRepository.save(order);
 
-        // 7. Ejecutar si es MARKET
+        // 8. Ejecutar si es MARKET
         if (order.isMarket()) {
             order = executeMarketOrder(order, instrument, referencePrice);
         }
 
-        // 8. Publicar evento de dominio
+        // 9. Publicar evento de dominio
         publishEvent(order);
 
-        // 9. Guardar respuesta en idempotencia
+        // 10. Guardar respuesta en idempotencia
         Result result = Result.from(order);
         saveIdempotency(command, result);
 
