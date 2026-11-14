@@ -32,7 +32,15 @@
       "type": "bugfix",
       "status": "done",
       "updated": "2026-11-13"
+    },
+    {
+      "id": "004",
+      "folder": "004-fix-market-order-price-drift",
+      "title": "Prevenir descalce de precio entre validación y ejecución en órdenes MARKET",
+      "type": "bugfix",
+      "status": "done",
+      "updated": "2026-11-14"
     }
   ],
-  "lastUpdated": "2026-11-13"
+  "lastUpdated": "2026-11-14"
 }

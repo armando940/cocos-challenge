@@ -110,15 +110,17 @@ class OrderMatcherTest {
     @DisplayName("Ejecuta una orden MARKET al último close")
     void executesMarketOrderAtLatestClose() {
         Order order = Order.newMarketOrder(GGAL_ID, USER_ID, OrderSide.BUY, 10L, "key-market");
-        when(marketDataProvider.findLatestPrice(GGAL_ID))
-                .thenReturn(Optional.of(price("11200", "10800")));
+        // Ahora executeMarketOrder recibe el precio como parámetro (no consulta marketDataProvider)
+        BigDecimal executionPrice = new BigDecimal("11200");
 
-        Order filled = matcher.executeMarketOrder(order, ggal);
+        Order filled = matcher.executeMarketOrder(order, ggal, executionPrice);
 
         assertThat(filled.status()).isEqualTo(OrderStatus.FILLED);
         assertThat(filled.executedPrice()).isEqualByComparingTo("11200");
         assertThat(filled.executedSize()).isEqualTo(10);
         assertThat(filled.price()).isEqualByComparingTo("11200");
+        // Verificar que NO se consultó marketDataProvider
+        verifyNoInteractions(marketDataProvider);
     }
 
     @Test
@@ -126,20 +128,42 @@ class OrderMatcherTest {
     void doesNotExecuteLimitOrderAsMarket() {
         Order limit = Order.newLimitOrder(GGAL_ID, USER_ID, OrderSide.BUY, 10L, new BigDecimal("100"), "key-limit");
 
-        assertThatThrownBy(() -> matcher.executeMarketOrder(limit, ggal))
+        // El precio no importa porque debe lanzar excepción antes de usarlo
+        assertThatThrownBy(() -> matcher.executeMarketOrder(limit, ggal, new BigDecimal("100")))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Solo órdenes MARKET");
         verifyNoInteractions(marketDataProvider);
     }
 
     @Test
-    @DisplayName("Falla al ejecutar MARKET si no hay precio")
-    void failsMarketExecutionWithoutPrice() {
+    @DisplayName("Falla al ejecutar MARKET si precio de ejecución es null")
+    void failsMarketExecutionWithNullPrice() {
         Order order = Order.newMarketOrder(GGAL_ID, USER_ID, OrderSide.BUY, 10L, "key-market");
-        when(marketDataProvider.findLatestPrice(GGAL_ID)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> matcher.executeMarketOrder(order, ggal))
-                .isInstanceOf(InstrumentPriceNotFoundException.class);
+        assertThatThrownBy(() -> matcher.executeMarketOrder(order, ggal, null))
+                .isInstanceOf(NullPointerException.class);
+        // Verificar que NO se consultó marketDataProvider
+        verifyNoInteractions(marketDataProvider);
+    }
+
+    @Test
+    @DisplayName("Previene descalce de precio entre validación y ejecución: usa el precio provisto, no re-consulta market data")
+    void preventsPriceDriftBetweenValidationAndExecution() {
+        // Given: Una orden MARKET y un precio de ejecución capturado durante la validación
+        Order order = Order.newMarketOrder(GGAL_ID, USER_ID, OrderSide.BUY, 10L, "key-market");
+        BigDecimal capturedPrice = new BigDecimal("10000"); // Precio capturado en validación
+
+        // When: Ejecutar la orden MARKET con el precio capturado
+        Order filled = matcher.executeMarketOrder(order, ggal, capturedPrice);
+
+        // Then: La orden se ejecuta con el precio CAPTURADO (10000)
+        assertThat(filled.status()).isEqualTo(OrderStatus.FILLED);
+        assertThat(filled.executedPrice()).isEqualByComparingTo("10000"); // Precio capturado
+        assertThat(filled.price()).isEqualByComparingTo("10000");
+        assertThat(filled.executedSize()).isEqualTo(10);
+
+        // Verificar que NO se consultó marketDataProvider durante la ejecución
+        verifyNoInteractions(marketDataProvider);
     }
 
     @Test

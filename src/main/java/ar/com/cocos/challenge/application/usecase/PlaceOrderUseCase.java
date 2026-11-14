@@ -96,7 +96,7 @@ public class PlaceOrderUseCase implements PlaceOrderPort {
 
         // 7. Ejecutar si es MARKET
         if (order.isMarket()) {
-            order = executeMarketOrder(order, instrument);
+            order = executeMarketOrder(order, instrument, referencePrice);
         }
 
         // 8. Publicar evento de dominio
@@ -120,8 +120,8 @@ public class PlaceOrderUseCase implements PlaceOrderPort {
         return result;
     }
 
-    private Order executeMarketOrder(Order order, Instrument instrument) {
-        Order filledOrder = orderMatcher.executeMarketOrder(order, instrument);
+    private Order executeMarketOrder(Order order, Instrument instrument, BigDecimal referencePrice) {
+        Order filledOrder = orderMatcher.executeMarketOrder(order, instrument, referencePrice);
         return orderRepository.save(filledOrder);
     }
 

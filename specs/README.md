@@ -9,16 +9,15 @@ el requerimiento es la unidad de cambio, de planificación y de revisión.
 | # | Carpeta | Título | Tipo | Estado | Activo | Última revisión |
 | :--- | :--- | :--- | :--- | :--- | :---: | :--- |
 | 000 | [`000-baseline-challenge/`](000-baseline-challenge/spec.md) | Backend challenge Cocos (base implementada) | baseline | ✅ done | — | 2026-11-12 · ✅ aprobado |
-| 001 | [`001-remove-unused-imports/`](001-remove-unused-imports/spec.md) | Remover imports no utilizados del proyecto | refactor | ✅ done | ✅ | 2026-11-13 · ✅ aprobado |
+| 001 | [`001-remove-unused-imports/`](001-remove-unused-imports/spec.md) | Remover imports no utilizados del proyecto | refactor | ✅ done | — | 2026-11-13 · ✅ aprobado |
 | 002 | [`002-fix-ci-secrets-if/`](002-fix-ci-secrets-if/spec.md) | Arreglar workflow CI: `secrets` inválido en `if` | bugfix | ✅ done | — | 2026-11-13 · ✅ aprobado |
 | 003 | [`003-fix-gradlew-exec-bit/`](003-fix-gradlew-exec-bit/spec.md) | Arreglar CI: `gradlew` sin bit de ejecutable | bugfix | ✅ done | — | 2026-11-13 · ✅ aprobado |
+| 004 | [`004-fix-market-order-price-drift/`](004-fix-market-order-price-drift/spec.md) | Prevenir descalce de precio entre validación y ejecución en órdenes MARKET | bugfix | ✅ done | — | 2026-11-14 · ✅ aprobado |
 
-> Próximo número libre: **004**. Se asigna con `/sdd-new`, no a mano.
+> Próximo número libre: **005**. Se asigna con `/sdd-new`, no a mano.
 > El baseline `000` conserva los IDs legacy `T-XX`; los requerimientos nuevos usan `RNNN-TXX`.
 
-> El requerimiento **activo** es el que figura en [`state.json`](state.json) (`activeRequirement`).
-> Solo puede haber uno activo a la vez; el resto queda `paused` hasta que se retome.
-> Hoy no hay ninguno activo: 000, 001 y 002 están cerrados. El próximo se crea con `/sdd-new`.
+> No hay requerimiento **activo** (figura en [`state.json`](state.json)).
 
 ## Estructura de una carpeta
 

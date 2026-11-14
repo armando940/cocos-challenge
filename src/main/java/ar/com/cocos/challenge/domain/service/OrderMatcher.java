@@ -11,6 +11,7 @@ import ar.com.cocos.challenge.domain.port.out.MarketDataProviderPort;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.Objects;
 
 /**
  * Servicio de dominio para crear y matchear órdenes.
@@ -61,17 +62,15 @@ public class OrderMatcher {
     }
 
     /**
-     * Ejecuta una orden MARKET inmediatamente usando el precio close actual.
+     * Ejecuta una orden MARKET inmediatamente usando el precio de ejecución provisto.
      */
-    public Order executeMarketOrder(Order order, Instrument instrument) {
+    public Order executeMarketOrder(Order order, Instrument instrument, BigDecimal executionPrice) {
         if (!order.isMarket()) {
             throw new IllegalStateException("Solo órdenes MARKET pueden ejecutarse inmediatamente");
         }
+        Objects.requireNonNull(executionPrice, "executionPrice cannot be null");
 
-        MarketPrice price = marketDataProvider.findLatestPrice(order.instrumentId())
-                .orElseThrow(() -> new InstrumentPriceNotFoundException(order.instrumentId()));
-
-        return order.filled(price.close(), order.size());
+        return order.filled(executionPrice, order.size());
     }
 
     /**

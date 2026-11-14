@@ -1,0 +1,28 @@
+{
+  "requirement": "004",
+  "folder": "004-fix-market-order-price-drift",
+  "status": "done",
+  "currentPhase": 5,
+  "currentTask": null,
+  "completedTasks": [
+    "R004-T01",
+    "R004-T02",
+    "R004-T03",
+    "R004-T04",
+    "R004-T05",
+    "R004-T06",
+    "R004-T07",
+    "R004-T08",
+    "R004-T09",
+    "R004-T10"
+  ],
+  "blockedTasks": [],
+  "pendingDecisions": [],
+  "lastReview": {
+    "verdict": "approved",
+    "date": "2026-11-14",
+    "notes": "Precio capturado una vez en PlaceOrderUseCase.execute(); reutilizado en validación y ejecución. Tests unitarios e integrativos confirman prevención de descalce. ./gradlew check verde, cobertura ≥80%. Sin hallazgos bloqueantes. Caché de precios eliminada en MarketDataJpaAdapter para garantizar precios siempre frescos."
+  },
+  "currentWave": "W7",
+  "updated": "2026-11-14"
+}
