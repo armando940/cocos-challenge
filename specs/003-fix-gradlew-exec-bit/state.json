@@ -1,0 +1,19 @@
+{
+  "requirement": "003",
+  "folder": "003-fix-gradlew-exec-bit",
+  "status": "done",
+  "currentPhase": 1,
+  "currentWave": "W1",
+  "currentTask": "R003-T01",
+  "completedTasks": [
+    "R003-T01"
+  ],
+  "blockedTasks": [],
+  "pendingDecisions": [],
+  "lastReview": {
+    "verdict": "approved",
+    "date": "2026-11-13",
+    "notes": "Modo 100755 verificado en índice. Cero diff de contenido. Smoke test compileJava verde."
+  },
+  "updated": "2026-11-13"
+}

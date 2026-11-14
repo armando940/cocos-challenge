@@ -1,5 +1,5 @@
 {
-  "activeRequirement": "002-fix-ci-secrets-if",
+  "activeRequirement": null,
   "requirements": [
     {
       "id": "000",
@@ -21,6 +21,14 @@
       "id": "002",
       "folder": "002-fix-ci-secrets-if",
       "title": "Arreglar workflow CI: secrets inválido en if",
+      "type": "bugfix",
+      "status": "done",
+      "updated": "2026-11-13"
+    },
+    {
+      "id": "003",
+      "folder": "003-fix-gradlew-exec-bit",
+      "title": "Arreglar CI: gradlew sin bit de ejecutable",
       "type": "bugfix",
       "status": "done",
       "updated": "2026-11-13"
