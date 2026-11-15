@@ -64,7 +64,15 @@
       "type": "bugfix",
       "status": "done",
       "updated": "2026-11-14"
+    },
+    {
+      "id": "008",
+      "folder": "008-fix-idempotency-race-condition",
+      "title": "Arreglar la race condition de idempotencia (misma key, distinto user)",
+      "type": "bugfix",
+      "status": "done",
+      "updated": "2026-11-15"
     }
   ],
-  "lastUpdated": "2026-11-14"
+  "lastUpdated": "2026-11-15"
 }

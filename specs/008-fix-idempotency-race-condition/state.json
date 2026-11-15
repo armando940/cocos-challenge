@@ -1,0 +1,12 @@
+{
+  "requirement": "008",
+  "folder": "008-fix-idempotency-race-condition",
+  "status": "done",
+  "currentPhase": 5,
+  "currentWave": "W4",
+  "currentTask": "R008-T07",
+  "completedTasks": ["R008-T01", "R008-T02", "R008-T03", "R008-T04", "R008-T05", "R008-T06", "R008-T07"],
+  "blockedTasks": [],
+  "pendingDecisions": [],
+  "lastReview": { "verdict": "approved", "date": "2026-11-15", "notes": "Reviewer aprobó ✅ — CA-01/CA-02 verificados por IdempotencyRaceConditionIT, CA-03/04/05 por regresión. Opción A implementada correctamente. Cobertura ≥ 80%. ADR-009 creado. Sin regresiones." }
+}

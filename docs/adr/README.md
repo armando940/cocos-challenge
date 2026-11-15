@@ -12,6 +12,7 @@ Registro de decisiones arquitectónicas (Architecture Decision Records) del back
 | [006](006-flyway-baseline-produccion.md) | Migraciones Flyway compatibles con el esquema legado de producción | Aceptado |
 | [007](007-lock-pesimista-por-usuario.md) | Lock pesimista por usuario en la validación de saldo | Aceptado |
 | [008](008-precio-limite-vs-ejecucion.md) | Precio límite original vs. precio de ejecución en `Order` | Aceptado |
+| [009](009-idempotency-race-condition.md) | Race condition de idempotencia cross-user (FOR UPDATE SKIP LOCKED) | Aceptado |
 
 ## Formato
 

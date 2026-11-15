@@ -16,8 +16,9 @@ el requerimiento es la unidad de cambio, de planificación y de revisión.
 | 005 | [`005-fix-balance-validation-race/`](005-fix-balance-validation-race/spec.md) | Eliminar race condition en la validación de saldo (lock pesimista por usuario) | bugfix | ✅ done | — | 2026-11-14 · ✅ aprobado |
 | 006 | [`006-fix-filled-price-semantics/`](006-fix-filled-price-semantics/spec.md) | Separar precio límite de precio de ejecución (`Order.filled`) y desacoplar el portfolio | bugfix | ✅ done | — | 2026-11-14 · ✅ aprobado |
 | 007 | [`007-fix-findlatestprices-query/`](007-fix-findlatestprices-query/spec.md) | Fix findLatestPrices sin LIMIT: query trae todas las filas históricas | bugfix | ✅ done | — | 2026-11-14 · ✅ aprobado |
+| 008 | [`008-fix-idempotency-race-condition/`](008-fix-idempotency-race-condition/spec.md) | Arreglar la race condition de idempotencia (misma key, distinto user) | bugfix | ✅ done | — | 2026-11-15 · ✅ aprobado |
 
-> Próximo número libre: **008**. Se asigna con `/sdd-new`, no a mano.
+> Próximo número libre: **009**. Se asigna con `/sdd-new`, no a mano.
 > El baseline `000` conserva los IDs legacy `T-XX`; los requerimientos nuevos usan `RNNN-TXX`.
 
 > No hay requerimiento **activo** (figura en [`state.json`](state.json)).

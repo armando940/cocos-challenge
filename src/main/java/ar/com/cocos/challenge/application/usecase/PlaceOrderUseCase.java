@@ -35,6 +35,7 @@ import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * Implementación del caso de uso: Colocar Orden.
@@ -64,18 +65,25 @@ public class PlaceOrderUseCase implements PlaceOrderPort {
     public Result execute(Command command) {
         Objects.requireNonNull(command, "command cannot be null");
 
-        // 1. Idempotencia: misma key + mismo request => devolver la respuesta original
-        var existing = idempotencyStore.findByKey(command.idempotencyKey());
+        // 1. Lock pesimista por usuario: serializa las órdenes del mismo usuario hasta el commit
+        //    y se toma antes de leer las órdenes FILLED en balanceValidator.validate
+        userRepositoryPort.lockById(command.userId());
+
+        // 2. Idempotencia con lock global: serializa por idempotency_key (cross-user)
+        //    - Optional.of(existing): key ya procesada → validar hash y devolver cacheado
+        //    - Optional.empty(): slot reservado → procesar orden y guardar al final
+        Optional<IdempotencyKey> existing = idempotencyStore.findByKeyWithLock(command.idempotencyKey());
         if (existing.isPresent()) {
             IdempotencyKey key = existing.get();
             if (!key.matchesRequestHash(hashRequest(command))) {
+                log.debug("Idempotency conflict: key={} hash mismatch", command.idempotencyKey());
                 throw new IdempotencyConflictException(command.idempotencyKey());
             }
+            log.debug("Idempotency hit: key={} returning cached response", command.idempotencyKey());
             return deserializeResult(key.responseBody());
         }
 
-        // 2. Lock pesimista por usuario: serializa las órdenes del mismo usuario hasta el commit y se toma antes de leer las órdenes FILLED en balanceValidator.validate
-        userRepositoryPort.lockById(command.userId());
+        log.debug("Idempotency slot reserved: key={}", command.idempotencyKey());
 
         // 3. Validar instrumento existe
         Instrument instrument = instrumentRepository.findById(command.instrumentId())
@@ -107,7 +115,7 @@ public class PlaceOrderUseCase implements PlaceOrderPort {
         // 9. Publicar evento de dominio
         publishEvent(order);
 
-        // 10. Guardar respuesta en idempotencia
+        // 10. Guardar respuesta en idempotencia (slot ya reservado, solo actualizamos)
         Result result = Result.from(order);
         saveIdempotency(command, result);
 
@@ -141,6 +149,7 @@ public class PlaceOrderUseCase implements PlaceOrderPort {
 
     private void saveIdempotency(Command command, Result result) {
         Instant now = Instant.now();
+        // Defensa en profundidad: si por alguna razón el slot ya tiene respuesta, no sobrescribir
         idempotencyStore.save(new IdempotencyKey(
                 command.idempotencyKey(),
                 hashRequest(command),

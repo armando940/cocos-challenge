@@ -18,6 +18,9 @@ public interface IdempotencyKeyJpaRepository extends JpaRepository<IdempotencyKe
 
     Optional<IdempotencyKeyEntity> findByKey(String key);
 
+    @Query(nativeQuery = true, value = "SELECT * FROM idempotency_keys WHERE key = :key FOR UPDATE SKIP LOCKED")
+    Optional<IdempotencyKeyEntity> findByKeyForUpdateSkipLocked(@Param("key") String key);
+
     @Modifying
     @Transactional
     @Query("DELETE FROM IdempotencyKeyEntity k WHERE k.expiresAt < :now")
