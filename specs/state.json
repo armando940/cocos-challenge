@@ -72,6 +72,14 @@
       "type": "bugfix",
       "status": "done",
       "updated": "2026-11-15"
+    },
+    {
+      "id": "009",
+      "folder": "009-remove-extra-query-save",
+      "title": "Eliminar query extra en PostgresOrderRepository.save()",
+      "type": "refactor",
+      "status": "done",
+      "updated": "2026-11-15"
     }
   ],
   "lastUpdated": "2026-11-15"

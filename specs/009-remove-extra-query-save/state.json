@@ -1,0 +1,12 @@
+{
+  "requirement": "009",
+  "folder": "009-remove-extra-query-save",
+  "status": "done",
+  "currentPhase": 2,
+  "currentWave": "W2",
+  "currentTask": "R009-T02",
+  "completedTasks": ["R009-T01", "R009-T02"],
+  "blockedTasks": [],
+  "pendingDecisions": [],
+  "lastReview": { "verdict": "approved", "date": "2026-11-15", "notes": "Veredicto: ✅ Aprobado" }
+}

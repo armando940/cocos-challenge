@@ -21,14 +21,7 @@ public class PostgresOrderRepository implements OrderRepositoryPort {
 
     @Override
     public Order save(Order order) {
-        OrderEntity entity;
-        if (order.id() == null) {
-            entity = PersistenceMapper.toEntity(order);
-        } else {
-            entity = jpaRepository.findById(order.id())
-                    .orElseThrow(() -> new IllegalArgumentException("Order not found: " + order.id()));
-            PersistenceMapper.updateEntity(entity, order);
-        }
+        OrderEntity entity = PersistenceMapper.toEntity(order);
         return PersistenceMapper.toDomain(jpaRepository.save(entity));
     }
 
