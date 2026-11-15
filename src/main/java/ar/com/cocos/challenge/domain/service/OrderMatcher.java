@@ -113,11 +113,16 @@ public class OrderMatcher {
     }
 
     /**
-     * Valida que una orden LIMIT tenga precio especificado.
+     * Valida que una orden LIMIT tenga precio especificado y positivo.
      */
     public static void validateLimitOrder(PlaceOrderPort.Command command) {
-        if (command.type() == OrderType.LIMIT && command.price() == null) {
-            throw new IllegalArgumentException("Precio obligatorio para órdenes LIMIT");
+        if (command.type() == OrderType.LIMIT) {
+            if (command.price() == null) {
+                throw new IllegalArgumentException("Precio obligatorio para órdenes LIMIT");
+            }
+            if (command.price().amount().signum() <= 0) {
+                throw new IllegalArgumentException("Precio debe ser positivo para órdenes LIMIT");
+            }
         }
     }
 }

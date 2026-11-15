@@ -80,7 +80,16 @@
       "type": "refactor",
       "status": "done",
       "updated": "2026-11-15"
+    },
+    {
+      "id": "010",
+      "folder": "010-domain-refinements-and-defensive-validation",
+      "title": "Domain refinements & defensive validation",
+      "type": "refactor",
+      "status": "done",
+      "updated": "2026-11-15"
     }
   ],
-  "lastUpdated": "2026-11-15"
+  "lastUpdated": "2026-11-15",
+  "activeRequirement": null
 }

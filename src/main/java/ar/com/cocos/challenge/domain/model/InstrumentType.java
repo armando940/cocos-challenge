@@ -10,5 +10,8 @@ public enum InstrumentType {
     CEDEAR,
     OPCION,
     FUTURO,
-    OTRO
+    OTRO;
+
+    /** Alias semántico para MONEDA. */
+    public static final InstrumentType CURRENCY = MONEDA;
 }

@@ -243,6 +243,30 @@ class OrderMatcherTest {
                 .hasMessageContaining("Precio obligatorio");
     }
 
+    @Test
+    @DisplayName("validateLimitOrder rechaza LIMIT con precio cero")
+    void rejectsLimitWithZeroPrice() {
+        assertThatThrownBy(() -> OrderMatcher.validateLimitOrder(
+                command(OrderType.LIMIT, OrderSide.BUY, 10L, BigDecimal.ZERO, null)))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    @DisplayName("validateLimitOrder rechaza LIMIT con precio negativo")
+    void rejectsLimitWithNegativePrice() {
+        assertThatThrownBy(() -> OrderMatcher.validateLimitOrder(
+                command(OrderType.LIMIT, OrderSide.BUY, 10L, new BigDecimal("-10"), null)))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    @DisplayName("validateLimitOrder acepta LIMIT con precio positivo")
+    void acceptsLimitWithPositivePrice() {
+        assertThatCode(() -> OrderMatcher.validateLimitOrder(
+                command(OrderType.LIMIT, OrderSide.BUY, 10L, new BigDecimal("100"), null)))
+                .doesNotThrowAnyException();
+    }
+
     private PlaceOrderPort.Command command(
             OrderType type,
             OrderSide side,

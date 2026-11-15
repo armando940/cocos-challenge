@@ -138,7 +138,7 @@ public class PortfolioCalculator {
             return Position.empty(instrumentId, instrument.ticker(), instrument.name());
         }
 
-        // Calcular costo promedio ponderado (FIFO simplificado: promedio de precios de compra)
+        // Calcular costo promedio ponderado (Costo Promedio Ponderado: promedio de precios de compra)
         Money totalCost = calculateWeightedAverageCost(orders, netQuantity);
         Money marketValue = Money.of(price.close()).multiply(netQuantity);
 
@@ -166,7 +166,7 @@ public class PortfolioCalculator {
     }
 
     /**
-     * Calcula el costo promedio ponderado de las compras (FIFO simplificado).
+     * Calcula el costo promedio ponderado de las compras (Costo Promedio Ponderado).
      * Solo considera órdenes BUY para el costo.
      */
     private Money calculateWeightedAverageCost(List<Order> orders, long netQuantity) {
