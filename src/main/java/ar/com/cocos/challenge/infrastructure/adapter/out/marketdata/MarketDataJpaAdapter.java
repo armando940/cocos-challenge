@@ -2,6 +2,7 @@ package ar.com.cocos.challenge.infrastructure.adapter.out.marketdata;
 
 import ar.com.cocos.challenge.domain.model.MarketPrice;
 import ar.com.cocos.challenge.domain.port.out.MarketDataProviderPort;
+import ar.com.cocos.challenge.infrastructure.adapter.out.persistence.MarketDataEntity;
 import ar.com.cocos.challenge.infrastructure.adapter.out.persistence.MarketDataJpaRepository;
 import ar.com.cocos.challenge.infrastructure.adapter.out.persistence.PersistenceMapper;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
@@ -38,9 +39,8 @@ public class MarketDataJpaAdapter implements MarketDataProviderPort {
     public Map<Long, MarketPrice> findLatestPrices(Set<Long> instrumentIds) {
         return jpaRepository.findByInstrumentIdInOrderByDatetimeDesc(instrumentIds).stream()
                 .collect(Collectors.toMap(
-                        e -> e.getInstrumentId(),
-                        PersistenceMapper::toDomain,
-                        (existing, replacement) -> existing // mantener el primero (más reciente)
+                        MarketDataEntity::getInstrumentId,
+                        PersistenceMapper::toDomain
                 ));
     }
 

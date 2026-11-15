@@ -56,6 +56,14 @@
       "type": "bugfix",
       "status": "done",
       "updated": "2026-11-14"
+    },
+    {
+      "id": "007",
+      "folder": "007-fix-findlatestprices-query",
+      "title": "Fix findLatestPrices sin LIMIT: query trae todas las filas históricas",
+      "type": "bugfix",
+      "status": "done",
+      "updated": "2026-11-14"
     }
   ],
   "lastUpdated": "2026-11-14"

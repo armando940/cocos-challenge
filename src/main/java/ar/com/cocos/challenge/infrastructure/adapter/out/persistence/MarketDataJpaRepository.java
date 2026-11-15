@@ -25,6 +25,6 @@ public interface MarketDataJpaRepository extends JpaRepository<MarketDataEntity,
      */
     Optional<MarketDataEntity> findFirstByInstrumentIdOrderByDatetimeDesc(Long instrumentId);
 
-    @Query("SELECT m FROM MarketDataEntity m WHERE m.instrumentId IN :instrumentIds ORDER BY m.datetime DESC")
+    @Query(value = "SELECT DISTINCT ON (instrument_id) * FROM marketdata WHERE instrument_id IN :instrumentIds ORDER BY instrument_id, datetime DESC", nativeQuery = true)
     List<MarketDataEntity> findByInstrumentIdInOrderByDatetimeDesc(@Param("instrumentIds") Set<Long> instrumentIds);
 }

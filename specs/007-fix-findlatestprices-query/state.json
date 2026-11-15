@@ -1,0 +1,16 @@
+{
+  "requirement": "007",
+  "folder": "007-fix-findlatestprices-query",
+  "status": "done",
+  "currentPhase": 2,
+  "currentTask": null,
+  "completedTasks": ["R007-T01", "R007-T02", "R007-T03", "R007-T04"],
+  "blockedTasks": [],
+  "pendingDecisions": [],
+  "lastReview": {
+    "verdict": "approved",
+    "date": "2026-11-14",
+    "notes": "Todos los CA verificados, invariantes globales respetadas, query optimizada con DISTINCT ON, tests de integración pasando, cobertura ≥80% verificada."
+  },
+  "updated": "2026-11-14"
+}
