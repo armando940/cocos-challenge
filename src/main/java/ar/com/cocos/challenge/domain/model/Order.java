@@ -14,12 +14,12 @@ public record Order(
     Long userId,
     OrderSide side,
     Long size,              // cantidad de acciones (entero)
-    BigDecimal price,       // precio por acción (null para MARKET)
+    BigDecimal price,       // precio límite original de la orden (null para MARKET); nunca se sobreescribe al ejecutar
     OrderType type,         // MARKET | LIMIT
     OrderStatus status,     // NEW | FILLED | REJECTED | CANCELLED
     Instant datetime,       // timestamp de creación/actualización
-    BigDecimal executedPrice, // precio real de ejecución (para FILLED)
-    Long executedSize,      // cantidad real ejecutada (para FILLED)
+    BigDecimal executedPrice, // precio real de ejecución (solo FILLED); distinto de `price` cuando la orden LIMIT se ejecuta a otro precio
+    Long executedSize,      // cantidad real ejecutada (solo FILLED)
     String rejectionReason, // razón de rechazo (para REJECTED)
     String idempotencyKey   // clave de idempotencia
 ) {
@@ -30,6 +30,26 @@ public record Order(
         Objects.requireNonNull(datetime, "datetime cannot be null");
         if (size != null && size < 0) {
             throw new IllegalArgumentException("size cannot be negative");
+        }
+        if (status == OrderStatus.FILLED) {
+            if (executedPrice == null) {
+                throw new IllegalArgumentException("executedPrice is required for FILLED orders");
+            }
+            if (executedPrice.signum() <= 0) {
+                throw new IllegalArgumentException("executedPrice must be positive for FILLED orders");
+            }
+            if (executedSize == null) {
+                throw new IllegalArgumentException("executedSize is required for FILLED orders");
+            }
+            if (executedSize < 0) {
+                throw new IllegalArgumentException("executedSize cannot be negative");
+            }
+            if (size == null) {
+                throw new IllegalArgumentException("size is required for FILLED orders");
+            }
+            if (executedSize > size) {
+                throw new IllegalArgumentException("executedSize cannot exceed size");
+            }
         }
     }
 
@@ -104,9 +124,9 @@ public record Order(
     }
 
     public Order filled(BigDecimal executedPrice, Long executedSize) {
-        // `price` pasa a guardar el precio real de ejecución: el portfolio
-        // calcula el efecto de caja con esta columna.
-        return new Order(id, instrumentId, userId, side, size, executedPrice, type, OrderStatus.FILLED, Instant.now(), executedPrice, executedSize, null, idempotencyKey);
+        // `price` conserva el precio límite original (null en MARKET); el precio real
+        // de ejecución se guarda en `executedPrice`.
+        return new Order(id, instrumentId, userId, side, size, price, type, OrderStatus.FILLED, Instant.now(), executedPrice, executedSize, null, idempotencyKey);
     }
 
     public Order rejected(String reason) {

@@ -13,6 +13,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -43,6 +44,9 @@ class PlaceOrderFlowIT {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
     @Test
     @DisplayName("Flujo completo de órdenes: MARKET, idempotencia, rechazos, LIMIT y cancelación")
@@ -95,6 +99,35 @@ class PlaceOrderFlowIT {
         assertThat(market.path("executedSize").asLong()).isEqualTo(10);
         long marketOrderId = market.path("orderId").asLong();
         assertThat(marketOrderId).isPositive();
+
+        // ---------------------------------------------------------------
+        // R006-T06: la persistencia separa precio límite de precio de ejecución
+        // ---------------------------------------------------------------
+        // Una MARKET no tiene precio límite (price IS NULL); el precio real de
+        // ejecución se guarda sólo en executed_price (CA-02).
+        Map<String, Object> marketRow = jdbcTemplate.queryForMap(
+                "SELECT price, executed_price, executed_size FROM orders WHERE id = ?", marketOrderId);
+        assertThat(marketRow.get("price"))
+                .as("Una orden MARKET no tiene precio límite: price debe persistirse NULL")
+                .isNull();
+        assertThat((BigDecimal) marketRow.get("executed_price"))
+                .as("executed_price debe coincidir con el precio real de ejecución")
+                .isEqualByComparingTo(executedPrice);
+        assertThat(((Number) marketRow.get("executed_size")).longValue())
+                .as("executed_size debe ser la cantidad ejecutada")
+                .isEqualTo(10);
+
+        // CA-04: el portfolio debita executedPrice × size (nunca el límite, que es null).
+        // Entre el snapshot inicial y esta MARKET BUY no hay otras órdenes.
+        BigDecimal initialCashForMarket = new BigDecimal(initialPortfolio.path("availableCash").asText());
+        BigDecimal expectedCashAfterMarket = initialCashForMarket
+                .subtract(executedPrice.multiply(BigDecimal.valueOf(10)))
+                .setScale(2, java.math.RoundingMode.HALF_UP);
+        JsonNode portfolioAfterMarket = getJson("/api/v1/portfolio/" + userId, HttpStatus.OK);
+        BigDecimal availableCashAfterMarket = new BigDecimal(portfolioAfterMarket.path("availableCash").asText());
+        assertThat(availableCashAfterMarket)
+                .as("CA-04: availableCash debe ser initialCash - executedPrice * size para la MARKET BUY")
+                .isEqualByComparingTo(expectedCashAfterMarket);
 
         // ---------------------------------------------------------------
         // Idempotencia: mismo request + misma key => misma orden

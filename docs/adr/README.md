@@ -11,6 +11,7 @@ Registro de decisiones arquitectónicas (Architecture Decision Records) del back
 | [005](005-event-driven.md) | Eventos de dominio asíncronos (in-process) | Aceptado (stretch) |
 | [006](006-flyway-baseline-produccion.md) | Migraciones Flyway compatibles con el esquema legado de producción | Aceptado |
 | [007](007-lock-pesimista-por-usuario.md) | Lock pesimista por usuario en la validación de saldo | Aceptado |
+| [008](008-precio-limite-vs-ejecucion.md) | Precio límite original vs. precio de ejecución en `Order` | Aceptado |
 
 ## Formato
 

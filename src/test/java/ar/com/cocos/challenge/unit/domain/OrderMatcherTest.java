@@ -118,7 +118,8 @@ class OrderMatcherTest {
         assertThat(filled.status()).isEqualTo(OrderStatus.FILLED);
         assertThat(filled.executedPrice()).isEqualByComparingTo("11200");
         assertThat(filled.executedSize()).isEqualTo(10);
-        assertThat(filled.price()).isEqualByComparingTo("11200");
+        // MARKET: filled() preserva el `price` original (null), el precio de ejecución va en executedPrice
+        assertThat(filled.price()).isNull();
         // Verificar que NO se consultó marketDataProvider
         verifyNoInteractions(marketDataProvider);
     }
@@ -159,7 +160,8 @@ class OrderMatcherTest {
         // Then: La orden se ejecuta con el precio CAPTURADO (10000)
         assertThat(filled.status()).isEqualTo(OrderStatus.FILLED);
         assertThat(filled.executedPrice()).isEqualByComparingTo("10000"); // Precio capturado
-        assertThat(filled.price()).isEqualByComparingTo("10000");
+        // MARKET: `price` original se preserva en null; el precio capturado va en executedPrice
+        assertThat(filled.price()).isNull();
         assertThat(filled.executedSize()).isEqualTo(10);
 
         // Verificar que NO se consultó marketDataProvider durante la ejecución

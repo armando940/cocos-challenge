@@ -67,7 +67,10 @@ public class PortfolioCalculator {
     }
 
     private Money cashEffect(Order order) {
-        Money effect = Money.of(order.price() != null ? order.price() : BigDecimal.ZERO).multiply(order.size());
+        // El repositorio solo devuelve órdenes FILLED y el dominio garantiza
+        // executedPrice no nulo para ese estado. Se usa el precio real de ejecución,
+        // nunca el precio límite original (`price`, null en MARKET).
+        Money effect = Money.of(order.executedPrice()).multiply(order.size());
 
         // CASH_IN suma, CASH_OUT resta
         // BUY resta (gasta pesos), SELL suma (recibe pesos)
@@ -167,19 +170,18 @@ public class PortfolioCalculator {
      * Solo considera órdenes BUY para el costo.
      */
     private Money calculateWeightedAverageCost(List<Order> orders, long netQuantity) {
-        // Filtrar solo compras con precio
+        // Solo las compras FILLED aportan costo.
         List<Order> buyOrders = orders.stream()
                 .filter(Order::isBuy)
-                .filter(o -> o.price() != null)
                 .toList();
 
         if (buyOrders.isEmpty()) {
             return Money.zero();
         }
 
-        // Costo total = suma(size * price) de todas las compras
+        // Costo total = suma(size * executedPrice) de todas las compras
         BigDecimal totalCost = buyOrders.stream()
-                .map(o -> o.price().multiply(BigDecimal.valueOf(o.size())))
+                .map(o -> o.executedPrice().multiply(BigDecimal.valueOf(o.size())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         // Promedio ponderado = costoTotal / cantidadTotalComprada

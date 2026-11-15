@@ -1,0 +1,25 @@
+{
+  "requirement": "006",
+  "folder": "006-fix-filled-price-semantics",
+  "status": "done",
+  "currentPhase": 4,
+  "currentWave": "W4",
+  "currentTask": null,
+  "completedTasks": [
+    "R006-T01",
+    "R006-T02",
+    "R006-T03",
+    "R006-T04",
+    "R006-T05",
+    "R006-T06",
+    "R006-T07"
+  ],
+  "blockedTasks": [],
+  "pendingDecisions": [],
+  "lastReview": {
+    "verdict": "approved",
+    "date": "2026-11-14",
+    "notes": "✅ Aprobado. Order.filled() preserva precio límite, invariante FILDED fail-fast, PortfolioCalculator usa executedPrice, migración V5 backfill, ADR-008, suite completa verde, cobertura 100% PortfolioCalculator."
+  },
+  "updated": "2026-11-14"
+}

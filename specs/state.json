@@ -48,6 +48,14 @@
       "type": "bugfix",
       "status": "done",
       "updated": "2026-11-14"
+    },
+    {
+      "id": "006",
+      "folder": "006-fix-filled-price-semantics",
+      "title": "Separar precio límite de precio de ejecución (Order.filled) y desacoplar el portfolio",
+      "type": "bugfix",
+      "status": "done",
+      "updated": "2026-11-14"
     }
   ],
   "lastUpdated": "2026-11-14"

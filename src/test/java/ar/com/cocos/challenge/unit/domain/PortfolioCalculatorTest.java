@@ -138,20 +138,43 @@ class PortfolioCalculatorTest {
     }
 
     @Test
-    @DisplayName("Una compra sin precio no aporta costo y el rendimiento es cero")
-    void handlesBuyWithoutPrice() {
+    @DisplayName("Una compra MARKET FILLED con price null y executedPrice seteado aporta costo")
+    void usesExecutedPriceWhenMarketBuyHasNullPrice() {
         stubFilledOrders(List.of(
-                new Order(2L, GGAL_ID, USER_ID, OrderSide.BUY, 10L, null,
-                        OrderType.MARKET, OrderStatus.FILLED, Instant.now(), null, 10L, null, "key-buy")
+                filled(2L, GGAL_ID, OrderSide.BUY, 10, "100")
         ));
-        stubPrice(GGAL_ID, "100", "100");
+        stubPrice(GGAL_ID, "150", "100");
         stubInstrument(GGAL_ID, "GGAL", "Grupo Financiero Galicia");
 
         Position position = calculator.calculate(USER_ID).positions().get(0);
 
+        // MARKET: price = null, el costo sale de executedPrice (100)
         assertThat(position.quantity()).isEqualTo(10);
-        assertThat(position.totalCost().amount()).isEqualByComparingTo("0");
-        assertThat(position.totalReturnPct()).isEqualByComparingTo("0");
+        assertThat(position.totalCost().amount()).isEqualByComparingTo("1000");
+        assertThat(position.marketValue().amount()).isEqualByComparingTo("1500");
+        assertThat(position.totalReturnPct()).isEqualByComparingTo("50.0000");
+    }
+
+    @Test
+    @DisplayName("Una orden LIMIT FILLED usa executedPrice y no el precio límite en caja y costo")
+    void usesExecutionPriceOverLimitPriceForFilledLimitOrder() {
+        Order limitBuy = new Order(
+                2L, GGAL_ID, USER_ID, OrderSide.BUY, 10L, new BigDecimal("100.00"),
+                OrderType.LIMIT, OrderStatus.FILLED, Instant.parse("2026-11-12T10:00:00Z"),
+                new BigDecimal("110.00"), 10L, null, "key-limit-2");
+        stubFilledOrders(List.of(limitBuy));
+        stubPrice(GGAL_ID, "120.00", "110.00");
+        stubInstrument(GGAL_ID, "GGAL", "Grupo Financiero Galicia");
+
+        Portfolio portfolio = calculator.calculate(USER_ID);
+
+        // caja: -10 * 110.00 (ejecución), nunca -10 * 100.00 (límite)
+        assertThat(portfolio.availableCash().amount()).isEqualByComparingTo("-1100.00");
+        Position position = portfolio.positions().get(0);
+        // costo: 10 * 110.00 (ejecución), no el límite de 100.00
+        assertThat(position.totalCost().amount()).isEqualByComparingTo("1100.00");
+        assertThat(position.marketValue().amount()).isEqualByComparingTo("1200.00");
+        assertThat(position.totalReturnPct()).isEqualByComparingTo("9.09");
     }
 
     @Test
@@ -201,7 +224,7 @@ class PortfolioCalculatorTest {
                 USER_ID,
                 side,
                 size,
-                executionPrice,
+                null, // MARKET: no tiene precio límite
                 OrderType.MARKET,
                 OrderStatus.FILLED,
                 Instant.parse("2026-11-12T10:00:00Z"),
