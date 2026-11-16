@@ -29,7 +29,7 @@ public class MarketDataJpaAdapter implements MarketDataProviderPort {
     @CircuitBreaker(name = "marketData", fallbackMethod = "getLatestPriceFallback")
     @Retry(name = "marketData")
     public Optional<MarketPrice> findLatestPrice(Long instrumentId) {
-        return jpaRepository.findFirstByInstrumentIdOrderByDatetimeDesc(instrumentId)
+        return jpaRepository.findFirstByInstrumentIdAndDatetimeIsNotNullOrderByDatetimeDesc(instrumentId)
                 .map(PersistenceMapper::toDomain);
     }
 

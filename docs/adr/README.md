@@ -13,6 +13,8 @@ Registro de decisiones arquitectónicas (Architecture Decision Records) del back
 | [007](007-lock-pesimista-por-usuario.md) | Lock pesimista por usuario en la validación de saldo | Aceptado |
 | [008](008-precio-limite-vs-ejecucion.md) | Precio límite original vs. precio de ejecución en `Order` | Aceptado |
 | [009](009-idempotency-race-condition.md) | Race condition de idempotencia cross-user (FOR UPDATE SKIP LOCKED) | Aceptado |
+| [010](010-marketdata-nullability-legacy.md) | Nullability de marketdata legacy: entidad alineada a Flyway y exclusión de filas sin timestamp | Superseded por 011 |
+| [011](011-marketdata-datetime-nullable-graceful-valuation.md) | datetime nullable en marketdata y valoración degradada del portfolio | Aceptado |
 
 ## Formato
 

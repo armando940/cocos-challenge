@@ -1,95 +1,110 @@
-{
-  "activeRequirement": null,
-  "requirements": [
-    {
-      "id": "000",
-      "folder": "000-baseline-challenge",
-      "title": "Backend challenge Cocos (base implementada)",
-      "type": "baseline",
-      "status": "done",
-      "updated": "2026-11-12"
-    },
-    {
-      "id": "001",
-      "folder": "001-remove-unused-imports",
-      "title": "Remover imports no utilizados del proyecto",
-      "type": "refactor",
-      "status": "done",
-      "updated": "2026-11-13"
-    },
-    {
-      "id": "002",
-      "folder": "002-fix-ci-secrets-if",
-      "title": "Arreglar workflow CI: secrets inválido en if",
-      "type": "bugfix",
-      "status": "done",
-      "updated": "2026-11-13"
-    },
-    {
-      "id": "003",
-      "folder": "003-fix-gradlew-exec-bit",
-      "title": "Arreglar CI: gradlew sin bit de ejecutable",
-      "type": "bugfix",
-      "status": "done",
-      "updated": "2026-11-13"
-    },
-    {
-      "id": "004",
-      "folder": "004-fix-market-order-price-drift",
-      "title": "Prevenir descalce de precio entre validación y ejecución en órdenes MARKET",
-      "type": "bugfix",
-      "status": "done",
-      "updated": "2026-11-14"
-    },
-    {
-      "id": "005",
-      "folder": "005-fix-balance-validation-race",
-      "title": "Eliminar race condition en la validación de saldo (lock pesimista por usuario)",
-      "type": "bugfix",
-      "status": "done",
-      "updated": "2026-11-14"
-    },
-    {
-      "id": "006",
-      "folder": "006-fix-filled-price-semantics",
-      "title": "Separar precio límite de precio de ejecución (Order.filled) y desacoplar el portfolio",
-      "type": "bugfix",
-      "status": "done",
-      "updated": "2026-11-14"
-    },
-    {
-      "id": "007",
-      "folder": "007-fix-findlatestprices-query",
-      "title": "Fix findLatestPrices sin LIMIT: query trae todas las filas históricas",
-      "type": "bugfix",
-      "status": "done",
-      "updated": "2026-11-14"
-    },
-    {
-      "id": "008",
-      "folder": "008-fix-idempotency-race-condition",
-      "title": "Arreglar la race condition de idempotencia (misma key, distinto user)",
-      "type": "bugfix",
-      "status": "done",
-      "updated": "2026-11-15"
-    },
-    {
-      "id": "009",
-      "folder": "009-remove-extra-query-save",
-      "title": "Eliminar query extra en PostgresOrderRepository.save()",
-      "type": "refactor",
-      "status": "done",
-      "updated": "2026-11-15"
-    },
-    {
-      "id": "010",
-      "folder": "010-domain-refinements-and-defensive-validation",
-      "title": "Domain refinements & defensive validation",
-      "type": "refactor",
-      "status": "done",
-      "updated": "2026-11-15"
-    }
-  ],
-  "lastUpdated": "2026-11-15",
-  "activeRequirement": null
+﻿{
+    "activeRequirement":  null,
+    "requirements":  [
+                         {
+                             "id":  "000",
+                             "folder":  "000-baseline-challenge",
+                             "title":  "Backend challenge Cocos (base implementada)",
+                             "type":  "baseline",
+                             "status":  "done",
+                             "updated":  "2026-11-12"
+                         },
+                         {
+                             "id":  "001",
+                             "folder":  "001-remove-unused-imports",
+                             "title":  "Remover imports no utilizados del proyecto",
+                             "type":  "refactor",
+                             "status":  "done",
+                             "updated":  "2026-11-13"
+                         },
+                         {
+                             "id":  "002",
+                             "folder":  "002-fix-ci-secrets-if",
+                             "title":  "Arreglar workflow CI: secrets inválido en if",
+                             "type":  "bugfix",
+                             "status":  "done",
+                             "updated":  "2026-11-13"
+                         },
+                         {
+                             "id":  "003",
+                             "folder":  "003-fix-gradlew-exec-bit",
+                             "title":  "Arreglar CI: gradlew sin bit de ejecutable",
+                             "type":  "bugfix",
+                             "status":  "done",
+                             "updated":  "2026-11-13"
+                         },
+                         {
+                             "id":  "004",
+                             "folder":  "004-fix-market-order-price-drift",
+                             "title":  "Prevenir descalce de precio entre validación y ejecución en órdenes MARKET",
+                             "type":  "bugfix",
+                             "status":  "done",
+                             "updated":  "2026-11-14"
+                         },
+                         {
+                             "id":  "005",
+                             "folder":  "005-fix-balance-validation-race",
+                             "title":  "Eliminar race condition en la validación de saldo (lock pesimista por usuario)",
+                             "type":  "bugfix",
+                             "status":  "done",
+                             "updated":  "2026-11-14"
+                         },
+                         {
+                             "id":  "006",
+                             "folder":  "006-fix-filled-price-semantics",
+                             "title":  "Separar precio límite de precio de ejecución (Order.filled) y desacoplar el portfolio",
+                             "type":  "bugfix",
+                             "status":  "done",
+                             "updated":  "2026-11-14"
+                         },
+                         {
+                             "id":  "007",
+                             "folder":  "007-fix-findlatestprices-query",
+                             "title":  "Fix findLatestPrices sin LIMIT: query trae todas las filas históricas",
+                             "type":  "bugfix",
+                             "status":  "done",
+                             "updated":  "2026-11-14"
+                         },
+                         {
+                             "id":  "008",
+                             "folder":  "008-fix-idempotency-race-condition",
+                             "title":  "Arreglar la race condition de idempotencia (misma key, distinto user)",
+                             "type":  "bugfix",
+                             "status":  "done",
+                             "updated":  "2026-11-15"
+                         },
+                         {
+                             "id":  "009",
+                             "folder":  "009-remove-extra-query-save",
+                             "title":  "Eliminar query extra en PostgresOrderRepository.save()",
+                             "type":  "refactor",
+                             "status":  "done",
+                             "updated":  "2026-11-15"
+                         },
+                         {
+                             "id":  "010",
+                             "folder":  "010-domain-refinements-and-defensive-validation",
+                             "title":  "Domain refinements \u0026 defensive validation",
+                             "type":  "refactor",
+                             "status":  "done",
+                             "updated":  "2026-11-15"
+                         },
+                         {
+                             "id":  "011",
+                             "folder":  "011-marketdata-legacy-nullable-ohlc",
+                             "title":  "Alinear nullability de MarketDataEntity con el esquema legacy",
+                             "type":  "bugfix",
+                             "status":  "done",
+                             "updated":  "2026-11-16"
+                         },
+                         {
+                             "id":  "012",
+                             "folder":  "012-marketdata-datetime-nullable-graceful-portfolio",
+                             "title":  "datetime nullable en MarketData y valoración degradada del portfolio",
+                             "type":  "refactor",
+                             "status":  "done",
+                             "updated":  "2026-11-16"
+                         }
+                     ],
+    "lastUpdated":  "2026-11-16"
 }

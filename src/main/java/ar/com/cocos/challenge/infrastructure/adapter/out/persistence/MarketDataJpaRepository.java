@@ -15,16 +15,16 @@ import java.util.Set;
 @Repository
 public interface MarketDataJpaRepository extends JpaRepository<MarketDataEntity, Long> {
 
-    @Query("SELECT m FROM MarketDataEntity m WHERE m.instrumentId = :instrumentId ORDER BY m.datetime DESC")
-    List<MarketDataEntity> findByInstrumentIdOrderByDatetimeDesc(@Param("instrumentId") Long instrumentId);
-
     /**
-     * Último precio (close) de un instrumento.
+     * Último precio (close) de un instrumento, ignorando filas sin datetime
+     * (la columna es nullable en la base legacy). En PostgreSQL
+     * {@code ORDER BY datetime DESC} ordena NULLS FIRST, así que sin este filtro
+     * una fila sin timestamp ganaría y el mapeo a {@code MarketPrice} fallaría.
      * Query derivada: Spring Data aplica el límite de 1 fila. Con @Query el
      * ORDER BY no limita y el retorno Optional explotaba con 2 filas de marketdata.
      */
-    Optional<MarketDataEntity> findFirstByInstrumentIdOrderByDatetimeDesc(Long instrumentId);
+    Optional<MarketDataEntity> findFirstByInstrumentIdAndDatetimeIsNotNullOrderByDatetimeDesc(Long instrumentId);
 
-    @Query(value = "SELECT DISTINCT ON (instrument_id) * FROM marketdata WHERE instrument_id IN :instrumentIds ORDER BY instrument_id, datetime DESC", nativeQuery = true)
+    @Query(value = "SELECT DISTINCT ON (instrument_id) * FROM marketdata WHERE instrument_id IN :instrumentIds AND datetime IS NOT NULL ORDER BY instrument_id, datetime DESC", nativeQuery = true)
     List<MarketDataEntity> findByInstrumentIdInOrderByDatetimeDesc(@Param("instrumentIds") Set<Long> instrumentIds);
 }

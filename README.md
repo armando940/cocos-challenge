@@ -201,19 +201,27 @@ Importar en Postman:
 2. `docs/postman/cocos-challenge.postman_environment.json` (seleccionar environment **Cocos Challenge — Local**)
 
 La colección cubre health, portfolio, búsqueda, MARKET por size/amount, idempotencia,
-rechazos, LIMIT + cancelación y validaciones. Ejecutarla de arriba hacia abajo.
+rechazos, LIMIT + cancelación, CASH_IN y validaciones. Ejecutarla de arriba hacia abajo.
+
+La carpeta `00 · Preparación` resuelve los `instrumentId` por ticker: en una base que
+corrió el dump legacy (`V1`), GGAL/YPFD/ARS **no** tienen los IDs 1/2/3. Guía completa,
+reset de datos y troubleshooting: [`docs/postman/README.md`](docs/postman/README.md).
 
 ### Smoke manual rápido
+
+Los IDs dependen de la base. Resolvé el de GGAL antes de operar (requiere `jq`):
 
 ```bash
 BASE=http://localhost:8080
 
 curl -s $BASE/api/v1/portfolio/1
-curl -s "$BASE/api/v1/instruments/search?q=GG"
-curl -s -X POST $BASE/api/v1/orders -H "Content-Type: application/json" -d '{
-  "userId": 1, "instrumentId": 3, "side": "BUY", "type": "MARKET",
-  "size": 10, "idempotencyKey": "11111111-1111-1111-1111-111111111111"
-}'
+GGAL_ID=$(curl -s "$BASE/api/v1/instruments/search?q=GGAL" \
+  | jq -r '.content[] | select(.ticker=="GGAL") | .instrumentId')
+
+curl -s -X POST $BASE/api/v1/orders -H "Content-Type: application/json" -d "{
+  \"userId\": 1, \"instrumentId\": $GGAL_ID, \"side\": \"BUY\", \"type\": \"MARKET\",
+  \"size\": 10, \"idempotencyKey\": \"11111111-1111-1111-1111-111111111111\"
+}"
 ```
 
 ## 🛡️ Resiliencia (Resilience4j)

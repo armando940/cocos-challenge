@@ -11,6 +11,19 @@ import java.time.Instant;
 
 /**
  * Entidad JPA para MarketData.
+ *
+ * <p>El esquema legacy de produccion ({@code V1__baseline_prod_schema.sql}) permite NULL en
+ * {@code high}, {@code low} y {@code open}: el dump historico trae esos campos en NULL cuando no
+ * hubo operacion para el instrumento en esa rueda. Por eso esos tres campos se mapean como
+ * opcionales.</p>
+ *
+ * <p>{@code datetime} es nullable en el esquema legacy: el dump historico puede traer filas sin
+ * timestamp. La entidad lo hidrata sin error; el adaptador filtra esas filas antes de mapearlas a
+ * dominio.</p>
+ *
+ * <p>En cambio, {@code close} y {@code previousClose} siguen siendo obligatorios porque el modelo
+ * de dominio {@code MarketPrice} los exige no nulos ({@code Objects.requireNonNull}) al construirse;
+ * sin ellos no hay precio de mercado utilizable.</p>
  */
 @Entity
 @Table(name = "marketdata", indexes = {
@@ -30,13 +43,13 @@ public class MarketDataEntity {
     @Column(name = "instrument_id", nullable = false)
     private Long instrumentId;
 
-    @Column(nullable = false, precision = 18, scale = 4)
+    @Column(precision = 18, scale = 4)
     private BigDecimal high;
 
-    @Column(nullable = false, precision = 18, scale = 4)
+    @Column(precision = 18, scale = 4)
     private BigDecimal low;
 
-    @Column(nullable = false, precision = 18, scale = 4)
+    @Column(precision = 18, scale = 4)
     private BigDecimal open;
 
     @Column(nullable = false, precision = 18, scale = 4)
@@ -45,7 +58,7 @@ public class MarketDataEntity {
     @Column(name = "previous_close", nullable = false, precision = 18, scale = 4)
     private BigDecimal previousClose;
 
-    @Column(nullable = false)
+    @Column
     private Instant datetime;
 
     @Column(name = "created_at", nullable = false, updatable = false)

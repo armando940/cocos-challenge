@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.TestPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -21,6 +22,7 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -54,6 +56,9 @@ class MarketDataJpaAdapterIT {
 
     @Autowired
     private InstrumentJpaRepository instrumentRepository;
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
     @Test
     @DisplayName("CA-01 y CA-02: findLatestPrices devuelve exactamente 1 fila por instrumento con el close más reciente")
@@ -183,6 +188,147 @@ class MarketDataJpaAdapterIT {
                 .hasSize(1);
         assertThat(result.keySet()).containsOnly(idA);
         assertThat(result.get(idA).close()).isEqualByComparingTo("100.00");
+    }
+
+    @Test
+    @DisplayName("CA-03: findLatestPrice hidrata una fila legacy con OHLC en NULL")
+    void findLatestPrice_legacyOhlcNulls_returnsMarketPrice() {
+        // ---------------------------------------------------------------
+        // Given: Un instrumento con una sola fila legacy cuyo high/low/open son NULL
+        // (el dump histórico los deja en NULL cuando no hubo operación en la rueda)
+        // ---------------------------------------------------------------
+        InstrumentEntity instrument = createInstrument("TESTE", "Test Instrument E", InstrumentType.ACCION);
+        instrumentRepository.save(instrument);
+        instrumentRepository.flush();
+
+        long id = instrument.getId();
+        marketDataRepository.save(createMarketData(
+                id,
+                null,                                  // high NULL
+                null,                                  // low NULL
+                null,                                  // open NULL
+                new BigDecimal("20.50"),               // close obligatorio
+                new BigDecimal("20.50"),               // previousClose obligatorio
+                Instant.now()));
+        marketDataRepository.flush();
+
+        // ---------------------------------------------------------------
+        // When: Llamar a findLatestPrice
+        // ---------------------------------------------------------------
+        Optional<MarketPrice> result = marketDataAdapter.findLatestPrice(id);
+
+        // ---------------------------------------------------------------
+        // Then: CA-03 - La fila se hidrata sin explotar y expone el close
+        // ---------------------------------------------------------------
+        assertThat(result)
+                .as("CA-03: La fila legacy con OHLC NULL debe poder mapearse a MarketPrice")
+                .isPresent();
+        assertThat(result.get().close())
+                .as("CA-03: close debe ser 20.50 aunque high/low/open sean NULL")
+                .isEqualByComparingTo("20.50");
+        assertThat(result.get().previousClose())
+                .as("CA-03: previousClose debe ser 20.50 aunque high/low/open sean NULL")
+                .isEqualByComparingTo("20.50");
+    }
+
+    @Test
+    @DisplayName("CA-04: findLatestPrice y findLatestPrices ignoran filas con datetime NULL")
+    void findLatestPriceAndLatestPrices_ignoreNullDatetime() {
+        // ---------------------------------------------------------------
+        // Given: Un instrumento con una fila legacy SIN timestamp (close más alto,
+        // insertada por JDBC para simular el dump) y una fila válida con timestamp
+        // ---------------------------------------------------------------
+        InstrumentEntity instrument = createInstrument("TESTF", "Test Instrument F", InstrumentType.ACCION);
+        instrumentRepository.save(instrument);
+        instrumentRepository.flush();
+
+        long id = instrument.getId();
+
+        // Fila legacy sin datetime: close = 999.00. En PostgreSQL ORDER BY datetime DESC
+        // ordena NULLS FIRST, así que sin el filtro datetime IS NOT NULL esta fila ganaría
+        // y el mapeo a MarketPrice explotaría por datetime nulo.
+        jdbcTemplate.update(
+                "INSERT INTO marketdata (instrument_id, high, low, \"open\", \"close\", previous_close, datetime) "
+                        + "VALUES (?, 999.00, 999.00, 999.00, 999.00, 999.00, NULL)",
+                id);
+
+        marketDataRepository.save(createMarketData(
+                id,
+                new BigDecimal("101.00"),
+                new BigDecimal("99.00"),
+                new BigDecimal("100.00"),
+                new BigDecimal("100.00"),
+                new BigDecimal("99.00"),
+                Instant.now()));
+        marketDataRepository.flush();
+
+        // ---------------------------------------------------------------
+        // When: Llamar a findLatestPrice y findLatestPrices
+        // ---------------------------------------------------------------
+        Optional<MarketPrice> latest = marketDataAdapter.findLatestPrice(id);
+        Map<Long, MarketPrice> latestMap = marketDataAdapter.findLatestPrices(Set.of(id));
+
+        // ---------------------------------------------------------------
+        // Then: CA-04 - Se ignora la fila sin datetime y se devuelve la válida
+        // ---------------------------------------------------------------
+        assertThat(latest)
+                .as("CA-04: findLatestPrice no debe elegir la fila con datetime NULL")
+                .isPresent();
+        assertThat(latest.get().close())
+                .as("CA-04: findLatestPrice debe devolver el close de la fila válida (100.00), no 999.00")
+                .isEqualByComparingTo("100.00");
+
+        assertThat(latestMap)
+                .as("CA-04: findLatestPrices debe devolver 1 entrada para el instrumento")
+                .hasSize(1);
+        assertThat(latestMap)
+                .as("CA-04: findLatestPrices debe incluir el instrumento solicitado")
+                .containsKey(id);
+        assertThat(latestMap.get(id).close())
+                .as("CA-04: findLatestPrices debe devolver el close de la fila válida (100.00), no 999.00")
+                .isEqualByComparingTo("100.00");
+    }
+
+    @Test
+    @DisplayName("CA-06: la entidad hidrata una fila legacy con datetime NULL")
+    void entityHydratesNullDatetimeFromLegacyRow() {
+        // ---------------------------------------------------------------
+        // Given: Un instrumento propio con una fila legacy SIN timestamp
+        // insertada por JDBC (simula el dump histórico)
+        // ---------------------------------------------------------------
+        InstrumentEntity instrument = createInstrument("TESTG", "Test Instrument G", InstrumentType.ACCION);
+        instrumentRepository.save(instrument);
+        instrumentRepository.flush();
+
+        Long id = instrument.getId();
+        Long rowId = jdbcTemplate.queryForObject(
+                "INSERT INTO marketdata (instrument_id, high, low, \"open\", \"close\", previous_close, datetime) "
+                        + "VALUES (?, 1.00, 1.00, 1.00, 1.00, 1.00, NULL) RETURNING id",
+                Long.class, id);
+
+        // ---------------------------------------------------------------
+        // When: Leer la fila por el repositorio JPA
+        // ---------------------------------------------------------------
+        Optional<MarketDataEntity> result = marketDataRepository.findById(rowId);
+
+        // ---------------------------------------------------------------
+        // Then: CA-06 - La entidad se hidrata sin explotar, con datetime NULL
+        // y close/previousClose obligatorios presentes
+        // ---------------------------------------------------------------
+        assertThat(result)
+                .as("CA-06: la entidad debe hidratar una fila legacy sin timestamp")
+                .isPresent();
+
+        MarketDataEntity entity = result.get();
+        assertThat(entity.getDatetime())
+                .as("CA-06: datetime debe ser null en una fila legacy")
+                .isNull();
+        assertThat(entity.getClose())
+                .as("CA-06: close debe hidratarse como 1.00")
+                .isEqualByComparingTo("1.00");
+        assertThat(entity.getPreviousClose())
+                .as("CA-06: previousClose debe hidratarse como 1.00")
+                .isEqualByComparingTo("1.00");
     }
 
     private MarketDataEntity createMarketData(

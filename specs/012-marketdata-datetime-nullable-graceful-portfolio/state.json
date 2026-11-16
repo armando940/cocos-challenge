@@ -1,0 +1,26 @@
+﻿{
+    "requirement":  "012",
+    "folder":  "012-marketdata-datetime-nullable-graceful-portfolio",
+    "status":  "done",
+    "currentPhase":  2,
+    "currentWave":  "W2",
+    "currentTask":  null,
+    "completedTasks":  [
+                           "R012-T01",
+                           "R012-T02",
+                           "R012-T03",
+                           "R012-T04"
+                       ],
+    "blockedTasks":  [
+
+                     ],
+    "pendingDecisions":  [
+
+                         ],
+    "lastReview":  {
+                       "date":  "2026-11-16",
+                       "verdict":  "approved",
+                       "notes":  "Reviewer aprobó (✅) con 3 observaciones menores: state.json desactualizado, DisplayNames CA-03/CA-04 compartidos con R007, y riesgo residual unrealizedPnl en posición degradada (no expuesto en REST). ./gradlew compileJava test y ./gradlew check verdes; PortfolioCalculatorTest 9, PersistenceMapperTest 2, MarketDataJpaAdapterIT 6."
+                   },
+    "updated":  "2026-11-16"
+}

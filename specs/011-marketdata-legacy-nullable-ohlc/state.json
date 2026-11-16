@@ -1,0 +1,22 @@
+﻿{
+  "requirement": "011",
+  "folder": "011-marketdata-legacy-nullable-ohlc",
+  "status": "done",
+  "currentPhase": 3,
+  "currentWave": "W3",
+  "currentTask": null,
+  "completedTasks": [
+    "R011-T01",
+    "R011-T02",
+    "R011-T03",
+    "R011-T04"
+  ],
+  "blockedTasks": [],
+  "pendingDecisions": [],
+  "lastReview": {
+    "verdict": "approved",
+    "date": "2026-11-16",
+    "notes": "Reviewer aprobó (✅) con dos observaciones menores no bloqueantes: discrepancia consciente datetime nullable en BD vs entidad (documentada en ADR-010 y neutralizada con datetime IS NOT NULL) y prefijos de DisplayName CA-03/CA-04 compartidos con tests de R007. ./gradlew compileJava test y ./gradlew check verdes; MarketDataJpaAdapterIT 5/5."
+  },
+  "updated": "2026-11-16"
+}

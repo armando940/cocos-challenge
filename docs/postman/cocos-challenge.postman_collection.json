@@ -2,18 +2,161 @@
   "info": {
     "_postman_id": "c0c05c0a-0000-4000-8000-000000000001",
     "name": "Cocos Challenge — Backend API",
-    "description": "Colección de requests para la API de trading/brokerage del challenge de Cocos Capital.\n\nIncluye el flujo completo: portfolio, búsqueda de instrumentos, órdenes MARKET/LIMIT, idempotencia, rechazos por saldo/tenencia y cancelación.\n\nRequisitos:\n- App corriendo en `http://localhost:8080` (o ajustar `baseUrl` en el environment).\n- Datos del seed V2 (`docker compose up -d postgres` + `bootRun`).\n\nOrden sugerido: ejecutar la colección de arriba hacia abajo.",
+    "description": "Colección de requests para la API de trading/brokerage del challenge de Cocos Capital.\n\nCubre el flujo completo: health, portfolio, búsqueda de instrumentos, órdenes MARKET/LIMIT, idempotencia, rechazos por saldo/tenencia, cancelación y operaciones de efectivo.\n\nRequisitos:\n- App corriendo en `http://localhost:8080` (o ajustar `baseUrl` en el environment).\n- Postgres con migraciones + seed (`docker compose up -d postgres` y `./gradlew bootRun`).\n- Importar y seleccionar el environment `Cocos Challenge — Local`.\n\nImportante: la carpeta `00 · Preparación` resuelve los IDs de los instrumentos por ticker. No hardcodees IDs: en una base que corrió el dump legacy (V1), GGAL/YPFD/ARS no tienen los IDs 2/3/1.\n\nOrden: ejecutar la colección de arriba hacia abajo (Collection Runner o newman). Cada corrida crea órdenes nuevas y consume saldo; para volver al estado inicial, recrear la base (ver README de docs/postman).",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
-    { "key": "userId", "value": "1" },
-    { "key": "userIdWithoutCash", "value": "2" },
-    { "key": "arsId", "value": "1" },
-    { "key": "ggalId", "value": "2" },
-    { "key": "ypfdId", "value": "3" },
-    { "key": "aaplId", "value": "5" }
+    { "key": "ggalId", "value": "" },
+    { "key": "ggalPrice", "value": "" },
+    { "key": "ypfdId", "value": "" },
+    { "key": "ypfdPrice", "value": "" },
+    { "key": "pampId", "value": "" },
+    { "key": "pampPrice", "value": "" },
+    { "key": "arsId", "value": "" }
   ],
   "item": [
+    {
+      "name": "00 · Preparación (resolver IDs)",
+      "description": "Resuelve por ticker los IDs y precios de los instrumentos usados en toda la colección. Si el seed o el dump legacy cambian, esta carpeta mantiene la colección funcionando.",
+      "item": [
+        {
+          "name": "Resolver GGAL",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "const inst = body.content.find(i => i.ticker === 'GGAL');",
+                  "pm.test('GGAL existe', () => pm.expect(inst, 'No se encontró GGAL').to.be.an('object'));",
+                  "pm.test('GGAL tiene precio', () => pm.expect(Number(inst.currentPrice)).to.be.greaterThan(0));",
+                  "pm.collectionVariables.set('ggalId', inst.instrumentId);",
+                  "pm.collectionVariables.set('ggalPrice', inst.currentPrice);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/instruments/search?q=GGAL&page=0&size=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "instruments", "search"],
+              "query": [
+                { "key": "q", "value": "GGAL" },
+                { "key": "page", "value": "0" },
+                { "key": "size", "value": "20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Resolver YPFD",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "const inst = body.content.find(i => i.ticker === 'YPFD');",
+                  "pm.test('YPFD existe', () => pm.expect(inst, 'No se encontró YPFD').to.be.an('object'));",
+                  "pm.test('YPFD tiene precio', () => pm.expect(Number(inst.currentPrice)).to.be.greaterThan(0));",
+                  "pm.collectionVariables.set('ypfdId', inst.instrumentId);",
+                  "pm.collectionVariables.set('ypfdPrice', inst.currentPrice);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/instruments/search?q=YPFD&page=0&size=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "instruments", "search"],
+              "query": [
+                { "key": "q", "value": "YPFD" },
+                { "key": "page", "value": "0" },
+                { "key": "size", "value": "20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Resolver PAMP",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "const inst = body.content.find(i => i.ticker === 'PAMP');",
+                  "pm.test('PAMP existe', () => pm.expect(inst, 'No se encontró PAMP').to.be.an('object'));",
+                  "pm.test('PAMP tiene precio', () => pm.expect(Number(inst.currentPrice)).to.be.greaterThan(0));",
+                  "pm.collectionVariables.set('pampId', inst.instrumentId);",
+                  "pm.collectionVariables.set('pampPrice', inst.currentPrice);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/instruments/search?q=PAMP&page=0&size=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "instruments", "search"],
+              "query": [
+                { "key": "q", "value": "PAMP" },
+                { "key": "page", "value": "0" },
+                { "key": "size", "value": "20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Resolver ARS",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "const inst = body.content.find(i => i.ticker === 'ARS');",
+                  "pm.test('ARS existe', () => pm.expect(inst, 'No se encontró ARS').to.be.an('object'));",
+                  "pm.test('ARS es MONEDA', () => pm.expect(inst.type).to.eql('MONEDA'));",
+                  "pm.test('ARS cotiza 1.00 (seed V901)', () => pm.expect(Number(inst.currentPrice)).to.eql(1));",
+                  "pm.collectionVariables.set('arsId', inst.instrumentId);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/instruments/search?q=ARS&page=0&size=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "instruments", "search"],
+              "query": [
+                { "key": "q", "value": "ARS" },
+                { "key": "page", "value": "0" },
+                { "key": "size", "value": "20" }
+              ]
+            }
+          }
+        }
+      ]
+    },
     {
       "name": "01 · Health",
       "item": [
@@ -27,7 +170,8 @@
                 "exec": [
                   "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
                   "const body = pm.response.json();",
-                  "pm.test('Aplicación UP', () => pm.expect(body.status).to.eql('UP'));"
+                  "pm.test('Aplicación UP', () => pm.expect(body.status).to.eql('UP'));",
+                  "pm.test('Base de datos UP', () => pm.expect(body.components.database.status).to.eql('UP'));"
                 ]
               }
             }
@@ -41,11 +185,35 @@
               "path": ["actuator", "health"]
             }
           }
+        },
+        {
+          "name": "Readiness",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Readiness UP', () => pm.expect(pm.response.json().status).to.eql('UP'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/actuator/health/readiness",
+              "host": ["{{baseUrl}}"],
+              "path": ["actuator", "health", "readiness"]
+            }
+          }
         }
       ]
     },
     {
-      "name": "02 · Portfolio",
+      "name": "02 · Portfolio (estado inicial)",
       "item": [
         {
           "name": "Portfolio inicial (user 1)",
@@ -57,14 +225,16 @@
                 "exec": [
                   "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
                   "const body = pm.response.json();",
-                  "pm.test('Tiene userId', () => pm.expect(body.userId).to.eql(1));",
-                  "pm.test('Tiene availableCash', () => pm.expect(body.availableCash).to.be.a('string'));",
-                  "pm.test('Tiene totalAccountValue', () => pm.expect(body.totalAccountValue).to.be.a('string'));",
-                  "pm.test('Posiciones es un array', () => pm.expect(body.positions).to.be.an('array'));",
-                  "pm.test('Seed: 100 GGAL', () => {",
-                  "  const ggal = body.positions.find(p => p.ticker === 'GGAL');",
-                  "  pm.expect(ggal.quantity).to.eql(100);",
-                  "});"
+                  "pm.test('userId correcto', () => pm.expect(body.userId).to.eql(Number(pm.environment.get('userId'))));",
+                  "pm.test('availableCash es string', () => pm.expect(body.availableCash).to.be.a('string'));",
+                  "pm.test('totalAccountValue es string', () => pm.expect(body.totalAccountValue).to.be.a('string'));",
+                  "pm.test('positions es un array', () => pm.expect(body.positions).to.be.an('array'));",
+                  "pm.test('Tiene saldo para operar', () => pm.expect(Number(body.availableCash)).to.be.greaterThan(0));",
+                  "const ypfd = body.positions.find(p => p.ticker === 'YPFD');",
+                  "const pamp = body.positions.find(p => p.ticker === 'PAMP');",
+                  "pm.collectionVariables.set('beforeCash', body.availableCash);",
+                  "pm.collectionVariables.set('ypfdQtyBefore', ypfd ? ypfd.quantity : 0);",
+                  "pm.collectionVariables.set('pampQtyBefore', pamp ? pamp.quantity : 0);"
                 ]
               }
             }
@@ -80,7 +250,7 @@
           }
         },
         {
-          "name": "Portfolio final (user 1)",
+          "name": "Portfolio usuario 2 (sin posiciones)",
           "event": [
             {
               "listen": "test",
@@ -89,33 +259,8 @@
                 "exec": [
                   "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
                   "const body = pm.response.json();",
-                  "pm.test('Posiciones después de las compras', () => pm.expect(body.positions.length).to.be.at.least(1));",
-                  "pm.collectionVariables.set('finalAvailableCash', body.availableCash);"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/portfolio/{{userId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "portfolio", "{{userId}}"]
-            }
-          }
-        },
-        {
-          "name": "Portfolio usuario sin saldo (user 2)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
-                  "const body = pm.response.json();",
-                  "pm.test('Sin posiciones', () => pm.expect(body.positions).to.have.lengthOf(0));"
+                  "pm.test('Sin posiciones', () => pm.expect(body.positions).to.have.lengthOf(0));",
+                  "pm.test('Tiene algo de efectivo', () => pm.expect(Number(body.availableCash)).to.be.greaterThan(0));"
                 ]
               }
             }
@@ -145,13 +290,15 @@
                 "exec": [
                   "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
                   "const body = pm.response.json();",
-                  "pm.test('Encuentra GGAL', () => {",
-                  "  pm.expect(body.content.some(i => i.ticker === 'GGAL')).to.be.true;",
+                  "pm.test('content es un array', () => pm.expect(body.content).to.be.an('array'));",
+                  "pm.test('Metadatos de paginación', () => {",
+                  "  pm.expect(body.page).to.eql(0);",
+                  "  pm.expect(body.size).to.eql(20);",
+                  "  pm.expect(body.totalElements).to.be.a('number');",
                   "});",
-                  "pm.test('Incluye precio actual', () => {",
-                  "  const ggal = body.content.find(i => i.ticker === 'GGAL');",
-                  "  pm.expect(Number(ggal.currentPrice)).to.be.greaterThan(0);",
-                  "});"
+                  "const ggal = body.content.find(i => i.ticker === 'GGAL');",
+                  "pm.test('Encuentra GGAL', () => pm.expect(ggal).to.be.an('object'));",
+                  "pm.test('Incluye precio actual', () => pm.expect(Number(ggal.currentPrice)).to.be.greaterThan(0));"
                 ]
               }
             }
@@ -182,7 +329,7 @@
                   "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
                   "const body = pm.response.json();",
                   "pm.test('Encuentra Grupo Financiero Galicia', () => {",
-                  "  pm.expect(body.content.some(i => i.name.includes('Galicia'))).to.be.true;",
+                  "  pm.expect(body.content.some(i => i.name.toLowerCase().includes('galicia'))).to.be.true;",
                   "});"
                 ]
               }
@@ -202,23 +349,53 @@
               ]
             }
           }
+        },
+        {
+          "name": "Búsqueda sin resultados",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('Sin contenido', () => pm.expect(body.content).to.have.lengthOf(0));",
+                  "pm.test('totalElements = 0', () => pm.expect(body.totalElements).to.eql(0));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/instruments/search?q=zzzzzz&page=0&size=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "instruments", "search"],
+              "query": [
+                { "key": "q", "value": "zzzzzz" },
+                { "key": "page", "value": "0" },
+                { "key": "size", "value": "20" }
+              ]
+            }
+          }
         }
       ]
     },
     {
       "name": "04 · Órdenes (camino feliz)",
+      "description": "Cada request genera una idempotencyKey nueva (salvo los reintentos), así la colección se puede volver a correr sin reutilizar respuestas cacheadas.",
       "item": [
         {
-          "name": "MARKET BUY por size",
+          "name": "MARKET BUY por size (YPFD 10)",
           "event": [
             {
               "listen": "prerequest",
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "if (!pm.collectionVariables.get('marketKey')) {",
-                  "  pm.collectionVariables.set('marketKey', pm.variables.replaceIn('{{$guid}}'));",
-                  "}"
+                  "pm.collectionVariables.set('marketKey', pm.variables.replaceIn('{{$guid}}'));"
                 ]
               }
             },
@@ -230,9 +407,12 @@
                   "pm.test('HTTP 201', () => pm.response.to.have.status(201));",
                   "const body = pm.response.json();",
                   "pm.test('Queda FILLED', () => pm.expect(body.status).to.eql('FILLED'));",
+                  "pm.test('Ejecuta 10 acciones', () => pm.expect(body.executedSize).to.eql(10));",
                   "pm.test('Tiene precio de ejecución', () => pm.expect(Number(body.executedPrice)).to.be.greaterThan(0));",
+                  "pm.test('Devuelve orderId', () => pm.expect(body.orderId).to.be.a('number'));",
                   "pm.collectionVariables.set('marketOrderId', body.orderId);",
-                  "pm.collectionVariables.set('marketOrderDatetime', body.datetime);"
+                  "pm.collectionVariables.set('marketOrderDatetime', body.datetime);",
+                  "pm.collectionVariables.set('ypfdExecutedPrice', body.executedPrice);"
                 ]
               }
             }
@@ -256,17 +436,6 @@
           "name": "Reintento idéntico (idempotencia)",
           "event": [
             {
-              "listen": "prerequest",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "if (!pm.collectionVariables.get('marketKey')) {",
-                  "  pm.collectionVariables.set('marketKey', pm.variables.replaceIn('{{$guid}}'));",
-                  "}"
-                ]
-              }
-            },
-            {
               "listen": "test",
               "script": {
                 "type": "text/javascript",
@@ -276,9 +445,10 @@
                   "pm.test('Devuelve la MISMA orden', () => {",
                   "  pm.expect(body.orderId).to.eql(pm.collectionVariables.get('marketOrderId'));",
                   "});",
-                  "pm.test('Mismo datetime', () => {",
+                  "pm.test('Mismo datetime (no se re-ejecutó)', () => {",
                   "  pm.expect(body.datetime).to.eql(pm.collectionVariables.get('marketOrderDatetime'));",
-                  "});"
+                  "});",
+                  "pm.test('Sigue FILLED', () => pm.expect(body.status).to.eql('FILLED'));"
                 ]
               }
             }
@@ -307,8 +477,10 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('HTTP 409', () => pm.response.to.have.status(409));",
-                  "pm.test('Título de conflicto', () => {",
-                  "  pm.expect(pm.response.json().title).to.match(/idempotencia/i);",
+                  "const body = pm.response.json();",
+                  "pm.test('Título de conflicto', () => pm.expect(body.title).to.eql('Conflicto de idempotencia'));",
+                  "pm.test('Reporta la key en properties', () => {",
+                  "  pm.expect(body.properties.key).to.eql(pm.collectionVariables.get('marketKey'));",
                   "});"
                 ]
               }
@@ -330,7 +502,7 @@
           }
         },
         {
-          "name": "MARKET BUY por amount",
+          "name": "MARKET BUY por amount (PAMP $50.000)",
           "event": [
             {
               "listen": "test",
@@ -341,8 +513,14 @@
                   "const body = pm.response.json();",
                   "pm.test('Queda FILLED', () => pm.expect(body.status).to.eql('FILLED'));",
                   "pm.test('Calcula acciones enteras (floor)', () => {",
-                  "  pm.expect(body.executedSize).to.be.greaterThan(0);",
-                  "});"
+                  "  const expected = Math.floor(50000 / Number(body.executedPrice));",
+                  "  pm.expect(body.executedSize).to.eql(expected);",
+                  "});",
+                  "pm.test('No gasta más que el monto', () => {",
+                  "  pm.expect(Number(body.executedPrice) * body.executedSize).to.be.at.most(50000);",
+                  "});",
+                  "pm.collectionVariables.set('altExecutedSize', body.executedSize);",
+                  "pm.collectionVariables.set('altExecutedPrice', body.executedPrice);"
                 ]
               }
             }
@@ -352,7 +530,7 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"userId\": {{userId}},\n  \"instrumentId\": {{aaplId}},\n  \"side\": \"BUY\",\n  \"type\": \"MARKET\",\n  \"amount\": 50000,\n  \"idempotencyKey\": \"{{$guid}}\"\n}",
+              "raw": "{\n  \"userId\": {{userId}},\n  \"instrumentId\": {{pampId}},\n  \"side\": \"BUY\",\n  \"type\": \"MARKET\",\n  \"amount\": 50000,\n  \"idempotencyKey\": \"{{$guid}}\"\n}",
               "options": { "raw": { "language": "json" } }
             },
             "url": {
@@ -366,6 +544,17 @@
           "name": "LIMIT BUY → NEW",
           "event": [
             {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const price = Number(pm.collectionVariables.get('ggalPrice'));",
+                  "if (!price) { throw new Error('Falta ggalPrice: ejecutá primero la carpeta 00 · Preparación'); }",
+                  "pm.collectionVariables.set('limitPrice', (price * 0.5).toFixed(2));"
+                ]
+              }
+            },
+            {
               "listen": "test",
               "script": {
                 "type": "text/javascript",
@@ -373,6 +562,8 @@
                   "pm.test('HTTP 201', () => pm.response.to.have.status(201));",
                   "const body = pm.response.json();",
                   "pm.test('Queda NEW (no se ejecuta)', () => pm.expect(body.status).to.eql('NEW'));",
+                  "pm.test('Sin precio de ejecución', () => pm.expect(body.executedPrice).to.be.null);",
+                  "pm.test('Sin cantidad ejecutada', () => pm.expect(body.executedSize).to.be.null);",
                   "pm.collectionVariables.set('limitOrderId', body.orderId);"
                 ]
               }
@@ -383,7 +574,7 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"userId\": {{userId}},\n  \"instrumentId\": {{ggalId}},\n  \"side\": \"BUY\",\n  \"type\": \"LIMIT\",\n  \"price\": 10000,\n  \"size\": 5,\n  \"idempotencyKey\": \"{{$guid}}\"\n}",
+              "raw": "{\n  \"userId\": {{userId}},\n  \"instrumentId\": {{ggalId}},\n  \"side\": \"BUY\",\n  \"type\": \"LIMIT\",\n  \"price\": {{limitPrice}},\n  \"size\": 5,\n  \"idempotencyKey\": \"{{$guid}}\"\n}",
               "options": { "raw": { "language": "json" } }
             },
             "url": {
@@ -403,7 +594,10 @@
                 "exec": [
                   "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
                   "const body = pm.response.json();",
-                  "pm.test('Queda CANCELLED', () => pm.expect(body.status).to.eql('CANCELLED'));"
+                  "pm.test('Queda CANCELLED', () => pm.expect(body.status).to.eql('CANCELLED'));",
+                  "pm.test('Es la orden cancelada', () => {",
+                  "  pm.expect(body.orderId).to.eql(pm.collectionVariables.get('limitOrderId'));",
+                  "});"
                 ]
               }
             }
@@ -427,9 +621,9 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('HTTP 409', () => pm.response.to.have.status(409));",
-                  "pm.test('Título no cancelable', () => {",
-                  "  pm.expect(pm.response.json().title).to.match(/no puede cancelarse/i);",
-                  "});"
+                  "const body = pm.response.json();",
+                  "pm.test('Título no cancelable', () => pm.expect(body.title).to.eql('Orden no puede cancelarse'));",
+                  "pm.test('Estado actual CANCELLED', () => pm.expect(body.properties.currentStatus).to.eql('CANCELLED'));"
                 ]
               }
             }
@@ -453,6 +647,15 @@
           "name": "BUY sin saldo → 400 REJECTED",
           "event": [
             {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('rejectKey', pm.variables.replaceIn('{{$guid}}'));"
+                ]
+              }
+            },
+            {
               "listen": "test",
               "script": {
                 "type": "text/javascript",
@@ -460,7 +663,10 @@
                   "pm.test('HTTP 400', () => pm.response.to.have.status(400));",
                   "const body = pm.response.json();",
                   "pm.test('Queda REJECTED', () => pm.expect(body.status).to.eql('REJECTED'));",
-                  "pm.test('Razón INSUFFICIENT_CASH', () => pm.expect(body.rejectionReason).to.eql('INSUFFICIENT_CASH'));"
+                  "pm.test('Razón INSUFFICIENT_CASH', () => pm.expect(body.rejectionReason).to.eql('INSUFFICIENT_CASH'));",
+                  "pm.test('No se ejecutó', () => pm.expect(body.executedPrice).to.be.null);",
+                  "pm.collectionVariables.set('rejectedOrderId', body.orderId);",
+                  "pm.collectionVariables.set('rejectedDatetime', body.datetime);"
                 ]
               }
             }
@@ -470,7 +676,41 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"userId\": {{userIdWithoutCash}},\n  \"instrumentId\": {{ggalId}},\n  \"side\": \"BUY\",\n  \"type\": \"MARKET\",\n  \"size\": 100,\n  \"idempotencyKey\": \"{{$guid}}\"\n}",
+              "raw": "{\n  \"userId\": {{userIdWithoutCash}},\n  \"instrumentId\": {{ggalId}},\n  \"side\": \"BUY\",\n  \"type\": \"MARKET\",\n  \"size\": 1000000,\n  \"idempotencyKey\": \"{{rejectKey}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/orders",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "orders"]
+            }
+          }
+        },
+        {
+          "name": "Reintento del rechazo (idempotencia)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 400', () => pm.response.to.have.status(400));",
+                  "const body = pm.response.json();",
+                  "pm.test('Devuelve la MISMA orden rechazada', () => {",
+                  "  pm.expect(body.orderId).to.eql(pm.collectionVariables.get('rejectedOrderId'));",
+                  "});",
+                  "pm.test('Mismo motivo', () => pm.expect(body.rejectionReason).to.eql('INSUFFICIENT_CASH'));",
+                  "pm.test('Mismo datetime', () => pm.expect(body.datetime).to.eql(pm.collectionVariables.get('rejectedDatetime')));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": {{userIdWithoutCash}},\n  \"instrumentId\": {{ggalId}},\n  \"side\": \"BUY\",\n  \"type\": \"MARKET\",\n  \"size\": 1000000,\n  \"idempotencyKey\": \"{{rejectKey}}\"\n}",
               "options": { "raw": { "language": "json" } }
             },
             "url": {
@@ -501,7 +741,7 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"userId\": {{userId}},\n  \"instrumentId\": {{ggalId}},\n  \"side\": \"SELL\",\n  \"type\": \"MARKET\",\n  \"size\": 999,\n  \"idempotencyKey\": \"{{$guid}}\"\n}",
+              "raw": "{\n  \"userId\": {{userId}},\n  \"instrumentId\": {{ggalId}},\n  \"side\": \"SELL\",\n  \"type\": \"MARKET\",\n  \"size\": 999999,\n  \"idempotencyKey\": \"{{$guid}}\"\n}",
               "options": { "raw": { "language": "json" } }
             },
             "url": {
@@ -519,7 +759,10 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('HTTP 400', () => pm.response.to.have.status(400));"
+                  "pm.test('HTTP 400', () => pm.response.to.have.status(400));",
+                  "const body = pm.response.json();",
+                  "pm.test('Título de solicitud inválida', () => pm.expect(body.title).to.eql('Solicitud inválida'));",
+                  "pm.test('Explica el XOR', () => pm.expect(body.detail).to.match(/size como amount/i));"
                 ]
               }
             }
@@ -540,6 +783,68 @@
           }
         },
         {
+          "name": "LIMIT sin price → 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 400', () => pm.response.to.have.status(400));",
+                  "const body = pm.response.json();",
+                  "pm.test('Título de solicitud inválida', () => pm.expect(body.title).to.eql('Solicitud inválida'));",
+                  "pm.test('Explica que falta el precio', () => pm.expect(body.detail).to.match(/precio/i));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": {{userId}},\n  \"instrumentId\": {{ggalId}},\n  \"side\": \"BUY\",\n  \"type\": \"LIMIT\",\n  \"size\": 1,\n  \"idempotencyKey\": \"{{$guid}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/orders",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "orders"]
+            }
+          }
+        },
+        {
+          "name": "amount insuficiente para 1 acción → 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 400', () => pm.response.to.have.status(400));",
+                  "const body = pm.response.json();",
+                  "pm.test('Título de solicitud inválida', () => pm.expect(body.title).to.eql('Solicitud inválida'));",
+                  "pm.test('Explica el monto insuficiente', () => pm.expect(body.detail).to.match(/monto insuficiente/i));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": {{userId}},\n  \"instrumentId\": {{ggalId}},\n  \"side\": \"BUY\",\n  \"type\": \"MARKET\",\n  \"amount\": 1,\n  \"idempotencyKey\": \"{{$guid}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/orders",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "orders"]
+            }
+          }
+        },
+        {
           "name": "Instrumento inexistente → 404",
           "event": [
             {
@@ -547,7 +852,10 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('HTTP 404', () => pm.response.to.have.status(404));"
+                  "pm.test('HTTP 404', () => pm.response.to.have.status(404));",
+                  "const body = pm.response.json();",
+                  "pm.test('Título', () => pm.expect(body.title).to.eql('Instrumento no encontrado'));",
+                  "pm.test('Reporta el instrumentId', () => pm.expect(body.properties.instrumentId).to.eql(999999));"
                 ]
               }
             }
@@ -564,6 +872,211 @@
               "raw": "{{baseUrl}}/api/v1/orders",
               "host": ["{{baseUrl}}"],
               "path": ["api", "v1", "orders"]
+            }
+          }
+        },
+        {
+          "name": "Cancelar orden inexistente → 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 404', () => pm.response.to.have.status(404));",
+                  "const body = pm.response.json();",
+                  "pm.test('Título', () => pm.expect(body.title).to.eql('Orden no encontrada'));",
+                  "pm.test('Reporta el orderId', () => pm.expect(body.properties.orderId).to.eql(999999));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/orders/999999/cancel",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "orders", "999999", "cancel"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "06 · Cierre (venta y efectivo)",
+      "description": "Verifica el impacto de las operaciones anteriores con deltas (no con valores absolutos del seed), para que la colección funcione tanto en una base nueva como en la que ya trae el dump legacy.",
+      "item": [
+        {
+          "name": "Portfolio después de las compras",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "const before = Number(pm.collectionVariables.get('beforeCash'));",
+                  "const after = Number(body.availableCash);",
+                  "pm.test('El efectivo bajó', () => pm.expect(after).to.be.below(before));",
+                  "pm.test('Débito exacto de las dos compras MARKET', () => {",
+                  "  const delta = (before - after).toFixed(2);",
+                  "  const ypfdCost = 10 * Number(pm.collectionVariables.get('ypfdExecutedPrice'));",
+                  "  const pampCost = Number(pm.collectionVariables.get('altExecutedSize')) * Number(pm.collectionVariables.get('altExecutedPrice'));",
+                  "  pm.expect(delta).to.eql((ypfdCost + pampCost).toFixed(2));",
+                  "});",
+                  "const ypfd = body.positions.find(p => p.ticker === 'YPFD');",
+                  "const pamp = body.positions.find(p => p.ticker === 'PAMP');",
+                  "pm.test('YPFD tiene 10 acciones más', () => {",
+                  "  const beforeQty = Number(pm.collectionVariables.get('ypfdQtyBefore'));",
+                  "  pm.expect(ypfd.quantity).to.eql(beforeQty + 10);",
+                  "});",
+                  "pm.test('PAMP tiene las acciones compradas de más', () => {",
+                  "  const beforeQty = Number(pm.collectionVariables.get('pampQtyBefore'));",
+                  "  pm.expect(pamp.quantity).to.eql(beforeQty + Number(pm.collectionVariables.get('altExecutedSize')));",
+                  "});",
+                  "pm.collectionVariables.set('ypfdQtyAfterBuys', ypfd.quantity);",
+                  "pm.collectionVariables.set('cashAfterBuys', body.availableCash);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/portfolio/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "portfolio", "{{userId}}"]
+            }
+          }
+        },
+        {
+          "name": "SELL 5 YPFD → FILLED",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 201', () => pm.response.to.have.status(201));",
+                  "const body = pm.response.json();",
+                  "pm.test('Queda FILLED', () => pm.expect(body.status).to.eql('FILLED'));",
+                  "pm.test('Ejecuta 5 acciones', () => pm.expect(body.executedSize).to.eql(5));",
+                  "pm.test('Tiene precio de ejecución', () => pm.expect(Number(body.executedPrice)).to.be.greaterThan(0));",
+                  "pm.collectionVariables.set('sellExecutedPrice', body.executedPrice);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": {{userId}},\n  \"instrumentId\": {{ypfdId}},\n  \"side\": \"SELL\",\n  \"type\": \"MARKET\",\n  \"size\": 5,\n  \"idempotencyKey\": \"{{$guid}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/orders",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "orders"]
+            }
+          }
+        },
+        {
+          "name": "Portfolio tras la venta",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "const ypfd = body.positions.find(p => p.ticker === 'YPFD');",
+                  "pm.test('YPFD bajó 5 acciones', () => {",
+                  "  const afterBuys = Number(pm.collectionVariables.get('ypfdQtyAfterBuys'));",
+                  "  pm.expect(ypfd.quantity).to.eql(afterBuys - 5);",
+                  "});",
+                  "pm.test('El efectivo subió por la venta', () => {",
+                  "  const cash = Number(body.availableCash);",
+                  "  const expected = Number(pm.collectionVariables.get('cashAfterBuys')) + 5 * Number(pm.collectionVariables.get('sellExecutedPrice'));",
+                  "  pm.expect(cash.toFixed(2)).to.eql(expected.toFixed(2));",
+                  "});",
+                  "pm.collectionVariables.set('cashBeforeCashIn', body.availableCash);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/portfolio/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "portfolio", "{{userId}}"]
+            }
+          }
+        },
+        {
+          "name": "CASH_IN $100.000 (ARS)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 201', () => pm.response.to.have.status(201));",
+                  "const body = pm.response.json();",
+                  "pm.test('Queda FILLED', () => pm.expect(body.status).to.eql('FILLED'));",
+                  "pm.test('Se ejecuta a 1.00', () => pm.expect(Number(body.executedPrice)).to.eql(1));",
+                  "pm.test('Acredita el monto completo', () => pm.expect(body.executedSize).to.eql(100000));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": {{userId}},\n  \"instrumentId\": {{arsId}},\n  \"side\": \"CASH_IN\",\n  \"type\": \"MARKET\",\n  \"size\": 100000,\n  \"idempotencyKey\": \"{{$guid}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/orders",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "orders"]
+            }
+          }
+        },
+        {
+          "name": "Portfolio final",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('El CASH_IN acreditó $100.000', () => {",
+                  "  const before = Number(pm.collectionVariables.get('cashBeforeCashIn'));",
+                  "  pm.expect(Number(body.availableCash).toFixed(2)).to.eql((before + 100000).toFixed(2));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/portfolio/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "portfolio", "{{userId}}"]
             }
           }
         }

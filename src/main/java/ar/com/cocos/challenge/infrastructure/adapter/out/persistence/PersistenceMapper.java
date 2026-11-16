@@ -80,6 +80,10 @@ public final class PersistenceMapper {
 
     // MarketData
     public static MarketPrice toDomain(MarketDataEntity entity) {
+        if (entity.getDatetime() == null) {
+            throw new IllegalStateException(
+                    "MarketData sin datetime (id=" + entity.getId() + "): no se puede construir MarketPrice");
+        }
         return new MarketPrice(
                 entity.getClose(),
                 entity.getPreviousClose(),

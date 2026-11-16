@@ -124,11 +124,6 @@ public class PortfolioCalculator {
             throw new IllegalStateException("Instrumento no encontrado: " + instrumentId);
         }
 
-        MarketPrice price = prices.get(instrumentId);
-        if (price == null) {
-            throw new IllegalStateException("Precio no disponible para instrumento: " + instrumentId);
-        }
-
         // Calcular cantidad neta: BUY suma, SELL resta
         long netQuantity = orders.stream()
                 .mapToLong(o -> o.isBuy() ? o.size() : -o.size())
@@ -140,6 +135,23 @@ public class PortfolioCalculator {
 
         // Calcular costo promedio ponderado (Costo Promedio Ponderado: promedio de precios de compra)
         Money totalCost = calculateWeightedAverageCost(orders, netQuantity);
+
+        MarketPrice price = prices.get(instrumentId);
+        if (price == null) {
+            // Degradación graceful: sin precio de mercado la posición se valora en 0
+            // en lugar de tumbar la consulta completa del portfolio.
+            return new Position(
+                    instrumentId,
+                    instrument.ticker(),
+                    instrument.name(),
+                    netQuantity,
+                    Money.zero(),
+                    totalCost,
+                    BigDecimal.ZERO,
+                    BigDecimal.ZERO
+            );
+        }
+
         Money marketValue = Money.of(price.close()).multiply(netQuantity);
 
         // Rendimiento total: (valorMercado - costoTotal) / costoTotal * 100

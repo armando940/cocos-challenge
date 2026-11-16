@@ -190,15 +190,49 @@ class PortfolioCalculatorTest {
     }
 
     @Test
-    @DisplayName("Falla si no hay precio de mercado para una posición")
-    void throwsWhenPriceIsMissing() {
-        stubFilledOrders(List.of(filled(2L, GGAL_ID, OrderSide.BUY, 10, "1000")));
+    @DisplayName("Degrada la valoración a cero si no hay precio de mercado para una posición")
+    void returnsDegradedPositionWhenPriceIsMissing() {
+        // Given: efectivo y una compra de GGAL, pero el mercado no tiene precio
+        stubFilledOrders(List.of(
+                filled(1L, ARS_ID, OrderSide.CASH_IN, 100_000, "1.00"),
+                filled(2L, GGAL_ID, OrderSide.BUY, 10, "1000")
+        ));
         when(marketDataProvider.findLatestPrices(Set.of(GGAL_ID))).thenReturn(Map.of());
         stubInstrument(GGAL_ID, "GGAL", "Grupo Financiero Galicia");
 
-        assertThatThrownBy(() -> calculator.calculate(USER_ID))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Precio no disponible");
+        // When: no debe lanzar excepción
+        Portfolio portfolio = calculator.calculate(USER_ID);
+
+        // Then: la posición se mantiene con su costo pero valorada en 0
+        assertThat(portfolio.positionsCount()).isEqualTo(1);
+        Position position = portfolio.positions().get(0);
+        assertThat(position.quantity()).isEqualTo(10);
+        assertThat(position.marketValue().amount()).isEqualByComparingTo("0.00");
+        assertThat(position.totalCost().amount()).isEqualByComparingTo("10000.00");
+        assertThat(position.totalReturnPct()).isEqualByComparingTo("0");
+        assertThat(position.dailyReturnPct()).isEqualByComparingTo("0");
+        assertThat(portfolio.availableCash().amount()).isEqualByComparingTo("90000.00");
+        assertThat(portfolio.totalAccountValue().amount())
+                .isEqualByComparingTo(portfolio.availableCash().amount());
+    }
+
+    @Test
+    @DisplayName("Una posición cerrada sin precio no falla y no aparece en el portfolio")
+    void returnsNoPositionsForFlatPositionWithoutPrice() {
+        // Given: BUY y SELL de GGAL por el mismo size, sin precio de mercado
+        stubFilledOrders(List.of(
+                filled(2L, GGAL_ID, OrderSide.BUY, 10, "1000"),
+                filled(3L, GGAL_ID, OrderSide.SELL, 10, "1200")
+        ));
+        when(marketDataProvider.findLatestPrices(Set.of(GGAL_ID))).thenReturn(Map.of());
+        stubInstrument(GGAL_ID, "GGAL", "Grupo Financiero Galicia");
+
+        // When: no debe lanzar excepción
+        Portfolio portfolio = calculator.calculate(USER_ID);
+
+        // Then: no hay posiciones y la caja refleja el resultado de las operaciones
+        assertThat(portfolio.positions()).isEmpty();
+        assertThat(portfolio.availableCash().amount()).isEqualByComparingTo("2000.00");
     }
 
     private void stubFilledOrders(List<Order> orders) {

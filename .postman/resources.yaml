@@ -1,0 +1,15 @@
+# Use this workspace to collaborate
+workspace:
+  id: ""
+
+localResources:
+  collections:
+    - ../docs/postman/cocos-challenge.postman_collection.json
+  environments:
+    - ../docs/postman/cocos-challenge.postman_environment.json
+
+# Each entry here maps a local resource to one or more corresponding objects in Postman Cloud
+
+cloudResources:
+  collections:
+    ../postman/collections/Cocos Challenge — Backend API: 613ea898-beed-44c1-8653-f45d599ccd98
