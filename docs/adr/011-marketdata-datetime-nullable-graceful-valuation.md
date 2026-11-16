@@ -5,6 +5,8 @@
 - **Decisores:** Armando Silva
 - **Supersede a:** ADR-010
 
+> **⚠️ Superseded (parcial):** La decisión de "valorar en 0 cuando no hay precio" ha sido supersedida por [ADR-012](../012-portfolio-historical-cost-valuation.md). El resto del ADR (datetime nullable, high/low/open nullable) sigue vigente.
+
 ## Contexto
 
 La tabla `marketdata` proviene del esquema legado de producción. Tanto en `V1__baseline_prod_schema.sql` como en

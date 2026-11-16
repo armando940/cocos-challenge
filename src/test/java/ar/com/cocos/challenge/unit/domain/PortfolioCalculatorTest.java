@@ -190,7 +190,7 @@ class PortfolioCalculatorTest {
     }
 
     @Test
-    @DisplayName("Degrada la valoración a cero si no hay precio de mercado para una posición")
+    @DisplayName("Degrada la valoración a costo histórico si no hay precio de mercado para una posición")
     void returnsDegradedPositionWhenPriceIsMissing() {
         // Given: efectivo y una compra de GGAL, pero el mercado no tiene precio
         stubFilledOrders(List.of(
@@ -203,17 +203,19 @@ class PortfolioCalculatorTest {
         // When: no debe lanzar excepción
         Portfolio portfolio = calculator.calculate(USER_ID);
 
-        // Then: la posición se mantiene con su costo pero valorada en 0
+        // Then: la posición se mantiene con su costo y se valora a costo histórico (NO en 0)
         assertThat(portfolio.positionsCount()).isEqualTo(1);
         Position position = portfolio.positions().get(0);
         assertThat(position.quantity()).isEqualTo(10);
-        assertThat(position.marketValue().amount()).isEqualByComparingTo("0.00");
+        assertThat(position.marketValue().amount()).isEqualByComparingTo("10000.00"); // = totalCost
         assertThat(position.totalCost().amount()).isEqualByComparingTo("10000.00");
         assertThat(position.totalReturnPct()).isEqualByComparingTo("0");
         assertThat(position.dailyReturnPct()).isEqualByComparingTo("0");
+        // unrealizedPnl = marketValue - totalCost = 0 (consistente con totalReturnPct = 0)
+        assertThat(position.unrealizedPnl().amount()).isEqualByComparingTo("0.00");
         assertThat(portfolio.availableCash().amount()).isEqualByComparingTo("90000.00");
-        assertThat(portfolio.totalAccountValue().amount())
-                .isEqualByComparingTo(portfolio.availableCash().amount());
+        // totalAccountValue = availableCash + sum(positions.marketValue) = 90000 + 10000 = 100000
+        assertThat(portfolio.totalAccountValue().amount()).isEqualByComparingTo("100000.00");
     }
 
     @Test

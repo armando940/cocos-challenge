@@ -138,17 +138,19 @@ public class PortfolioCalculator {
 
         MarketPrice price = prices.get(instrumentId);
         if (price == null) {
-            // Degradación graceful: sin precio de mercado la posición se valora en 0
-            // en lugar de tumbar la consulta completa del portfolio.
+            // Degradación graceful: sin precio de mercado la posición se valora a COSTO HISTÓRICO
+            // (totalCost) en lugar de 0. Esto preserva el patrimonio (totalAccountValue),
+            // hace unrealizedPnl() = 0 (consistente con totalReturnPct = 0),
+            // y el cliente infiere "sin precio" cuando totalReturnPct = 0 y dailyReturnPct = 0.
             return new Position(
                     instrumentId,
                     instrument.ticker(),
                     instrument.name(),
                     netQuantity,
-                    Money.zero(),
-                    totalCost,
-                    BigDecimal.ZERO,
-                    BigDecimal.ZERO
+                    totalCost,           // ← marketValue = costo (NO 0)
+                    totalCost,           // ← costo real
+                    BigDecimal.ZERO,     // ← totalReturnPct = 0 (sin precio, no sé si gané/perdí)
+                    BigDecimal.ZERO      // ← dailyReturnPct = 0 (sin precio actual)
             );
         }
 

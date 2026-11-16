@@ -1,0 +1,19 @@
+{
+  "requirement": "013",
+  "folder": "013-portfolio-historical-cost-valuation",
+  "status": "done",
+  "currentPhase": 1,
+  "currentWave": "W1",
+  "currentTask": null,
+  "completedTasks": [
+    "R013-T01",
+    "R013-T02"
+  ],
+  "blockedTasks": [],
+  "pendingDecisions": [],
+  "lastReview": {
+    "verdict": "approved",
+    "date": "2026-11-16",
+    "notes": "Auditoría completada exitosamente sin hallazgos. Todos los CAs verificados."
+  }
+}

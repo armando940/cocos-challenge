@@ -21,8 +21,9 @@ el requerimiento es la unidad de cambio, de planificación y de revisión.
 | 010 | [`010-domain-refinements-and-defensive-validation/`](010-domain-refinements-and-defensive-validation/spec.md) | Domain refinements & defensive validation | refactor | ✅ done | — | 2026-11-15 · ✅ aprobado |
 | 011 | [`011-marketdata-legacy-nullable-ohlc/`](011-marketdata-legacy-nullable-ohlc/spec.md) | Alinear nullability de `MarketDataEntity` con el esquema legacy | bugfix | ✅ done | — | 2026-11-16 · ✅ aprobado |
 | 012 | [`012-marketdata-datetime-nullable-graceful-portfolio/`](012-marketdata-datetime-nullable-graceful-portfolio/spec.md) | `datetime` nullable en MarketData y valoración degradada del portfolio | refactor | ✅ done | — | 2026-11-16 · ✅ aprobado |
+| 013 | [`013-portfolio-historical-cost-valuation/`](013-portfolio-historical-cost-valuation/spec.md) | Valoración a costo histórico en lugar de 0 para posiciones sin precio de mercado | bugfix | ✅ done | — | 2026-11-16 · ✅ aprobado |
 
-> Próximo número libre: **013**. Se asigna con `/sdd-new`, no a mano.
+> Próximo número libre: **014**. Se asigna con `/sdd-new`, no a mano.
 > El baseline `000` conserva los IDs legacy `T-XX`; los requerimientos nuevos usan `RNNN-TXX`.
 
 > No hay requerimiento **activo** (figura en [`state.json`](state.json)).
